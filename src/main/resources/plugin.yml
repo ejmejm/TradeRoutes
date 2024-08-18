@@ -1,0 +1,26 @@
+name: TradeRoutes
+version: '1.0-SNAPSHOT'
+main: io.github.ejmejm.tradeRoutes.TradeRoutes
+author: 'Edan Meyer'
+api-version: '1.20'
+#depend: [Citizens]
+softdepend: [Towny]
+
+permissions:
+  tradeRoutes.command.spawnTrader:
+    description: "Gives the ability to spawn trade route NPCs"
+    default: true
+
+commands:
+  traderoutes:
+    aliases: [tr]
+    description: "Command for everything TradeRoutes related"
+#    usage: "/traderoutes"
+#    permission: tradeRoutes.command.spawnTrader
+#    permission-message: "You do not have permission to use this command"
+
+#  spawntrader:
+#    usage: "/spawntrader"
+#    description: "Spawn a TradeRoutes trader NPC"
+#    permission: tradeRoutes.command.spawnTrader
+#    permission-message: "You do not have permission to use this command"
