@@ -1,5 +1,6 @@
 package io.github.ejmejm.tradeRoutes;
 
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
@@ -9,7 +10,8 @@ import java.lang.reflect.Method;
 
 public abstract class SubCommand {
 
-    protected String CMD_ERROR_COLOR = "<#ff0000>";
+    protected NamedTextColor CMD_INFO_COLOR = NamedTextColor.BLUE;
+    protected NamedTextColor CMD_ERROR_COLOR = NamedTextColor.DARK_RED;
 
     @Retention(RetentionPolicy.RUNTIME)
     protected @interface ExpectPlayer { }

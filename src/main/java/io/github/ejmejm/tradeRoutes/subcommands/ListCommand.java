@@ -3,12 +3,32 @@ package io.github.ejmejm.tradeRoutes.subcommands;
 import io.github.ejmejm.tradeRoutes.SubCommand;
 import io.github.ejmejm.tradeRoutes.TraderDatabase;
 import io.github.ejmejm.tradeRoutes.dataclasses.Trader;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 
 import java.util.HashMap;
 
 public class ListCommand extends SubCommand {
+    private static TextColor[] affiliationColors = {
+            NamedTextColor.GOLD,
+            NamedTextColor.LIGHT_PURPLE,
+            NamedTextColor.DARK_PURPLE,
+            NamedTextColor.GREEN,
+            NamedTextColor.DARK_GREEN,
+            NamedTextColor.BLUE,
+            NamedTextColor.DARK_BLUE,
+            NamedTextColor.AQUA,
+            NamedTextColor.DARK_AQUA,
+            TextColor.color(0x938BFF),
+            TextColor.color(0xFFB55E),
+            TextColor.color(0xA65DFF),
+            TextColor.color(0xFF4CA0)
+    };
+
     @Override
     public String getName() {
         return "list";
@@ -21,7 +41,7 @@ public class ListCommand extends SubCommand {
 
     @Override
     public String getSyntax() {
-        return "/tr list [traders|caravans]";
+        return "/tr list < traders | caravans>";
     }
 
     private void listTraders(CommandSender sender) {
@@ -30,27 +50,46 @@ public class ListCommand extends SubCommand {
         // Trader of <Affiliation> - (<x>, <y>, <z>)
 
         if (traders.isEmpty()) {
-            sender.sendMessage("There are currently no traders.");
+            sender.sendMessage(CMD_INFO_COLOR + "There are currently no traders.");
             return;
         }
 
-        StringBuilder traderList = new StringBuilder();
-        traderList.append("Traders:\n");
+        Component traderList = Component.text("------------- [ Traders List ] -------------", NamedTextColor.GOLD)
+                .append(Component.newline());
+
+        int currentColorIndex = 0;
         for (Trader trader : traders.values()) {
             Location location = trader.getLocation();
-            traderList.append("Trader of <<b><i>")
-                    .append(trader.getAffiliation())
-                    .append("</i></b>> - <gray>(")
-                    .append(location.x()).append(", ")
-                    .append(location.y()).append(", ")
-                    .append(location.z()).append(")\n");
+            TextColor affiliationColor = affiliationColors[currentColorIndex];
+            currentColorIndex = (currentColorIndex + 1) % affiliationColors.length;
+            String affiliation = trader.getAffiliation();
+
+            Component traderName;
+            if (affiliation == null) {
+                traderName = Component.text("Unaffiliated Trader", NamedTextColor.WHITE);
+            } else {
+                traderName = Component.text("Trader of ", NamedTextColor.WHITE)
+                        .append(Component.text(affiliation, affiliationColor, TextDecoration.BOLD, TextDecoration.ITALIC));
+            }
+
+            Component traderComponent = traderName
+                    .append(Component.text(" - ", NamedTextColor.WHITE))
+                    .append(Component.text("(", NamedTextColor.GRAY))
+                    .append(Component.text(location.x(), NamedTextColor.GRAY))
+                    .append(Component.text(", ", NamedTextColor.GRAY))
+                    .append(Component.text(location.y(), NamedTextColor.GRAY))
+                    .append(Component.text(", ", NamedTextColor.GRAY))
+                    .append(Component.text(location.z(), NamedTextColor.GRAY))
+                    .append(Component.text(")", NamedTextColor.GRAY))
+                    .append(Component.newline());
+            traderList = traderList.append(traderComponent);
         }
-        String traderListString = traderList.substring(0, traderList.length() - 1);
-        sender.sendMessage(traderListString);
+
+        sender.sendMessage(traderList);
     }
 
     private void listCaravans(CommandSender sender) {
-        sender.sendMessage("This command is not implemented yet.");
+        sender.sendMessage(CMD_ERROR_COLOR + "This command is not implemented yet.");
     }
 
     @ExpectNArgs(2)

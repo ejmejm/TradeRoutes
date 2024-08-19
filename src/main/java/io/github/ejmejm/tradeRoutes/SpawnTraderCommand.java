@@ -5,26 +5,18 @@ import de.oliver.fancynpcs.api.Npc;
 import de.oliver.fancynpcs.api.NpcData;
 import de.oliver.fancynpcs.api.utils.SkinFetcher;
 import io.github.ejmejm.tradeRoutes.dataclasses.Trader;
-import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.ChatColor;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabExecutor;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.NPC;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Villager;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.sql.SQLException;
-import java.util.List;
 import java.util.UUID;
 
 public class SpawnTraderCommand implements CommandExecutor {
@@ -34,19 +26,6 @@ public class SpawnTraderCommand implements CommandExecutor {
     private UUID genBlankUUID() {
         return UUID.fromString("00000000-0000-0000-0000-000000000000");
     }
-
-//    private Entity createTraderNPC(Location spawnLoc) {
-//        Villager traderNPC = spawnLoc.getWorld().spawn(spawnLoc, Villager.class);
-//        UUID traderId = traderNPC.getUniqueId();
-//
-//        traderNPC.setCustomName(ChatColor.RED + "Town Trader");
-//        traderNPC.setCustomNameVisible(true);
-//
-//        traderNPC.setPersistent(true);
-//        traderNPC.setNoDamageTicks(Integer.MAX_VALUE);
-//
-//        return traderNPC;
-//    }
 
     private Npc createTraderNPC(Location spawnLoc, Player player) {
         FancyNpcsPlugin plugin = FancyNpcsPlugin.get();

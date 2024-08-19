@@ -1,5 +1,6 @@
 package io.github.ejmejm.tradeRoutes;
 
+import de.oliver.fancynpcs.api.FancyNpcsPlugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.SQLException;
@@ -22,7 +23,7 @@ public final class TradeRoutes extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        getLogger().warning("This is a test warning");
+        FancyNpcsPlugin.get().getNpcManager().loadNpcs();
         initializeDatabase();
         getCommand("traderoutes").setExecutor(new CommandManager());
     }

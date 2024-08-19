@@ -29,12 +29,12 @@ public class SpawnTraderCommand extends SubCommand {
 
     @Override
     public String getDescription() {
-        return "Spawn a trader.";
+        return "Spawns a trader.";
     }
 
     @Override
     public String getSyntax() {
-        return "/tr spawntrader <affiliation>";
+        return "/tr spawntrader (affiliation)";
     }
 
     private UUID genBlankUUID() {
@@ -78,7 +78,7 @@ public class SpawnTraderCommand extends SubCommand {
         RayTraceResult rayHit = player.rayTraceBlocks(maxSpawnDistance, FluidCollisionMode.NEVER);
 
         if (rayHit == null) {
-            sender.sendMessage("You need to be looking at a block when you use this command!");
+            sender.sendMessage(CMD_ERROR_COLOR + "You need to be looking at a block when you use this command!");
             return;
         }
 

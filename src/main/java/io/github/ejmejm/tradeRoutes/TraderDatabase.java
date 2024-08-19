@@ -43,8 +43,8 @@ public class TraderDatabase {
 
     public static void initialize(String path, Plugin plugin) throws SQLException {
         if (INSTANCE == null) {
-            INSTANCE = new TraderDatabase(path, plugin);
             traders = new HashMap<>();
+            INSTANCE = new TraderDatabase(path, plugin);
         } else {
             throw new IllegalStateException("TraderDatabase has already been initialized.");
         }
