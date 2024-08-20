@@ -1,11 +1,6 @@
 package io.github.ejmejm.tradeRoutes.subcommands;
 
-import de.oliver.fancynpcs.api.FancyNpcsPlugin;
-import de.oliver.fancynpcs.api.Npc;
-import de.oliver.fancynpcs.api.NpcData;
-import de.oliver.fancynpcs.api.utils.SkinFetcher;
 import io.github.ejmejm.tradeRoutes.SubCommand;
-import io.github.ejmejm.tradeRoutes.TraderDatabase;
 import io.github.ejmejm.tradeRoutes.dataclasses.Trader;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
@@ -15,12 +10,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
-import java.sql.SQLException;
 import java.util.UUID;
 
 public class SpawnTraderCommand extends SubCommand {
-    private static final String TRADER_NAME_COLOR = "<#8a44bd>";
-    private static double maxSpawnDistance = 128;
+    private static final double maxSpawnDistance = 128;
 
     @Override
     public String getName() {
@@ -42,32 +35,7 @@ public class SpawnTraderCommand extends SubCommand {
     }
 
     private void createTraderNPC(Location spawnLoc, Player player) {
-        FancyNpcsPlugin plugin = FancyNpcsPlugin.get();
-
-        String traderName = Trader.TRADER_NAME_PREFIX + UUID.randomUUID();
-        NpcData data = new NpcData(traderName, player.identity().uuid(), spawnLoc);
-
-        // Purple name
-        data.setDisplayName(TRADER_NAME_COLOR + "<bold>Town Trader<reset> <gray><i>(Click me!)</i>");
-        data.setTurnToPlayer(true);
-
-        SkinFetcher skin = new SkinFetcher("https://s.namemc.com/i/0c451c5e949f8806.png");
-        data.setSkin(skin);
-
-        Npc npc = plugin.getNpcAdapter().apply(data);
-        Trader trader = new Trader(npc, null);
-
-        // Add trader to database
-        try {
-            TraderDatabase.getInstance().addTrader(trader);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
-        // Register and spawn NPC
-        plugin.getNpcManager().registerNpc(npc);
-        npc.create();
-        npc.spawnForAll();
+        Trader.createAndSpawn(spawnLoc, null, player);
     }
 
     @ExpectPlayer

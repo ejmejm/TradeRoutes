@@ -1,6 +1,7 @@
 package io.github.ejmejm.tradeRoutes;
 
 import de.oliver.fancynpcs.api.FancyNpcsPlugin;
+import io.github.ejmejm.tradeRoutes.gui.MenuListener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.sql.SQLException;
@@ -23,13 +24,22 @@ public final class TradeRoutes extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        // Register event listeners
+        getServer().getPluginManager().registerEvents(new MenuListener(), this);
+
+        // Prepare NPCs
         FancyNpcsPlugin.get().getNpcManager().loadNpcs();
         initializeDatabase();
+
         getCommand("traderoutes").setExecutor(new CommandManager());
     }
 
     @Override
     public void onDisable() {
         // Plugin shutdown logic
+    }
+
+    public static TradeRoutes getInstance() {
+        return getPlugin(TradeRoutes.class);
     }
 }
