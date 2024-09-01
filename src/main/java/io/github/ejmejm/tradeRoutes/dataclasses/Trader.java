@@ -11,16 +11,13 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 import java.sql.SQLException;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class Trader {
     public static String TRADER_NAME_PREFIX = "Trader-";
     private static final String SKIN_URL = "https://www.minecraftskins.net/therevenant/download";
     private static final String TRADER_NAME_COLOR = "<#8a44bd>";
-    private int maxTradeRoutes = 5;
+    private int maxTradeRoutes = 30;
 
     private final Npc npc;
     private String affiliation; // town name
@@ -32,11 +29,13 @@ public class Trader {
             throw new IllegalArgumentException("NPC with UUID " + uuid + " does not exist.");
         }
         this.affiliation = affiliation;
+        this.npc.getData().setOnClick(this::onClick);
     }
 
     public Trader(Npc npc, String affiliation) {
         this.npc = npc;
         this.affiliation = affiliation;
+        this.npc.getData().setOnClick(this::onClick);
     }
 
     public static Trader createAndSpawn(@NotNull Location spawnLoc, String affiliation, Player creator) {
@@ -53,11 +52,7 @@ public class Trader {
         SkinFetcher skin = new SkinFetcher(SKIN_URL);
         data.setSkin(skin);
         Npc npc = plugin.getNpcAdapter().apply(data);
-        Trader trader = new Trader(npc, null);
-
-        trader.getNpc().getData().setOnClick(player -> {
-            new TradeRouteMenu(trader).displayTo(player);
-        });
+        Trader trader = new Trader(npc, affiliation);
 
         // Add trader to database
         try {
@@ -70,34 +65,19 @@ public class Trader {
         plugin.getNpcManager().registerNpc(npc);
         npc.create();
         npc.spawnForAll();
+        plugin.getNpcManager().saveNpcs(false);
 
         return trader;
     }
 
-    public static Trader createAndSpawnFromData(NpcData data) {
-        FancyNpcsPlugin plugin = FancyNpcsPlugin.get();
-        Npc npc = plugin.getNpcAdapter().apply(data);
-        Trader trader = new Trader(npc, null);
-
-        // Add trader to database
-        try {
-            TraderDatabase.getInstance().addTrader(trader);
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
-        // Register and spawn NPC
-        plugin.getNpcManager().registerNpc(npc);
-        npc.create();
-        npc.spawnForAll();
-
-        return trader;
+    private void onClick(Player player) {
+        new TradeRouteMenu(this).displayTo(player);
     }
 
     public List<TradeMission> getTradeMissions() {
         // TODO: Implement persistent missions instead of random
 
-        HashMap<String, Trader> traders = TraderDatabase.getInstance().getTraders();
+        Map<String, Trader> traders = new HashMap<>(TraderDatabase.getInstance().getTraders());
         traders.remove(this.getUUID());
 
         List<Trader> sortedTraders = traders.values().stream()

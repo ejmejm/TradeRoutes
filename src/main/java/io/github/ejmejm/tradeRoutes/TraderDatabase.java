@@ -85,7 +85,9 @@ public class TraderDatabase {
                                 + uuid + " does not exist in the NpcRegistry. Removing from database.");
                         removeTrader(uuid);
                     } else {
-                        traders.put(uuid, new Trader(npcMap.get(uuid), affiliation));
+                        // Add onClick event because it is not persistent
+                        Npc npc = npcMap.get(uuid);
+                        traders.put(uuid, new Trader(npc, affiliation));
                         npcMap.remove(uuid);
                     }
                 }
@@ -196,7 +198,7 @@ public class TraderDatabase {
         }
     }
 
-    public HashMap<String, Trader> getTraders() {
-        return traders;
+    public Map<String, Trader> getTraders() {
+        return Collections.unmodifiableMap(traders);
     }
 }

@@ -10,7 +10,7 @@ import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 
-import java.util.HashMap;
+import java.util.Map;
 
 public class ListCommand extends SubCommand {
     private static TextColor[] affiliationColors = {
@@ -45,7 +45,7 @@ public class ListCommand extends SubCommand {
     }
 
     private void listTraders(CommandSender sender) {
-        HashMap<String, Trader> traders = TraderDatabase.getInstance().getTraders();
+        Map<String, Trader> traders = TraderDatabase.getInstance().getTraders();
         // Create a string builder, and create a line for each trader in the following format:
         // Trader of <Affiliation> - (<x>, <y>, <z>)
 

@@ -1,5 +1,6 @@
 package io.github.ejmejm.tradeRoutes;
 
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -27,6 +28,11 @@ public abstract class SubCommand {
         int max() default Integer.MAX_VALUE;
     }
 
+    @Retention(RetentionPolicy.RUNTIME)
+    protected @interface RequireOneOfPermissions {
+        String[] value();
+    }
+
     public abstract String getName();
 
     public abstract String getDescription();
@@ -44,7 +50,7 @@ public abstract class SubCommand {
             // Check if @ExpectPlayer is present
             if (performMethod.isAnnotationPresent(ExpectPlayer.class)) {
                 if (!(sender instanceof Player)) {
-                    sender.sendMessage(CMD_ERROR_COLOR + "Only players can use this command!");
+                    sender.sendMessage(Component.text("Only players can use this command!", CMD_ERROR_COLOR));
                     return;
                 }
             }
@@ -54,7 +60,8 @@ public abstract class SubCommand {
                 ExpectNArgs annotation = performMethod.getAnnotation(ExpectNArgs.class);
                 int expectedArgs = annotation.value();
                 if (args.length != expectedArgs) {
-                    sender.sendMessage(CMD_ERROR_COLOR + "Invalid number of arguments. Expected syntax: " + getSyntax());
+                    sender.sendMessage(Component.text(
+                            "Invalid number of arguments. Expected syntax: " + getSyntax(), CMD_ERROR_COLOR));
                     return;
                 }
             }
@@ -65,7 +72,26 @@ public abstract class SubCommand {
                 int minArgs = annotation.min();
                 int maxArgs = annotation.max();
                 if (args.length < minArgs || args.length > maxArgs) {
-                    sender.sendMessage(CMD_ERROR_COLOR + "Invalid number of arguments. Expected syntax: " + getSyntax());
+                    sender.sendMessage(Component.text(
+                            "Invalid number of arguments. Expected syntax: " + getSyntax(), CMD_ERROR_COLOR));
+                    return;
+                }
+            }
+
+            // Check for @RequireOneOfPermissions annotation
+            if (performMethod.isAnnotationPresent(RequireOneOfPermissions.class)) {
+                RequireOneOfPermissions annotation = performMethod.getAnnotation(RequireOneOfPermissions.class);
+                String[] permissions = annotation.value();
+                boolean hasPermission = false;
+                for (String p : permissions) {
+                    if (sender.hasPermission(p)) {
+                        hasPermission = true;
+                        break;
+                    }
+                }
+                if (!hasPermission) {
+                    sender.sendMessage(Component.text(
+                            "You do not have permission to use this command!", CMD_ERROR_COLOR));
                     return;
                 }
             }

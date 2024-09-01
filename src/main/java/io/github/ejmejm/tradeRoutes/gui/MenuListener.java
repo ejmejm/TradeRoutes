@@ -24,7 +24,7 @@ public class MenuListener implements Listener {
         System.out.println("Clicking in menu! Has metadata ? " + player.hasMetadata(IN_MENU_METADATA));
 
         if (player.hasMetadata(IN_MENU_METADATA)) {
-            final Menu menu = (Menu) player.getMetadata(IN_MENU_METADATA).get(0).value();
+            final Menu menu = (Menu) player.getMetadata(IN_MENU_METADATA).getFirst().value();
 
             System.out.println("Clicked " + slot + " in menu " + menu);
 

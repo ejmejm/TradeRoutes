@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class CommandManager implements CommandExecutor {
+    protected NamedTextColor CMD_INFO_COLOR = NamedTextColor.BLUE;
+    protected NamedTextColor CMD_ERROR_COLOR = NamedTextColor.DARK_RED;
 
     private static final TextColor ORANGE = TextColor.color(0xFFAE00);
 
@@ -69,7 +71,8 @@ public class CommandManager implements CommandExecutor {
         } else {
             SubCommand subcommand = subcommands.get(args[0].toLowerCase());
             if (subcommand == null) {
-                sender.sendMessage("Invalid command. Subcommand '" + args[0] + "' does not exist.");
+                sender.sendMessage(Component.text(
+                        "Invalid command. Subcommand '" + args[0] + "' does not exist.", CMD_ERROR_COLOR));
             } else {
                 subcommand.execute(sender, args);
             }

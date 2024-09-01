@@ -20,12 +20,17 @@ repositories {
         name = "fancynpcs"
         url = "https://repo.fancyplugins.de/releases"
     }
+    maven {
+        name = 'glaremasters repo'
+        url = 'https://repo.glaremasters.me/repository/towny/'
+    }
 }
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
     compileOnly("de.oliver:FancyNpcs:2.2.2")
     implementation("org.xerial:sqlite-jdbc:3.46.0.1")
+    compileOnly('com.palmergames.bukkit.towny:towny:0.100.3.12')
 }
 
 def targetJavaVersion = 21

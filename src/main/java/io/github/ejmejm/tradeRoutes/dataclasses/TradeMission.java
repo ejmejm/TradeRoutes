@@ -96,10 +96,10 @@ public class TradeMission {
                     generatedItems.remove(leastValuable);
                     itemStackValues.remove(leastValuable);
                 }
-
-                // Try to add another item to reach minValue
-                retryCount++;
             }
+
+            // Try to add another item to reach minValue
+            retryCount++;
 
             // If max retries exceeded, break out of the loop
             if (retryCount >= maxRetries) {

@@ -5,9 +5,9 @@
 package io.github.ejmejm.tradeRoutes.gui;
 
 import io.github.ejmejm.tradeRoutes.TradeRoutes;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -56,8 +56,7 @@ public class Menu {
     }
 
     public final void displayTo(Player player) {
-        final Inventory inventory = Bukkit.createInventory(player, this.size,
-                ChatColor.translateAlternateColorCodes('&', this.title));
+        final Inventory inventory = Bukkit.createInventory(player, this.size, Component.text(this.title));
 
         for (final Button button : this.buttons)
             inventory.setItem(button.getSlot(), button.getItem());
@@ -70,7 +69,7 @@ public class Menu {
                 public ItemStack getItem() {
                     final ItemStack item = new ItemStack(Material.OAK_DOOR);
                     final ItemMeta meta = item.getItemMeta();
-                    meta.setDisplayName(NamedTextColor.WHITE + "Return Back");
+                    meta.displayName(Component.text("Return Back", NamedTextColor.WHITE));
                     item.setItemMeta(meta);
 
                     return item;
@@ -98,7 +97,6 @@ public class Menu {
 
         player.setMetadata(IN_MENU_METADATA, new FixedMetadataValue(TradeRoutes.getInstance(), this));
 
-        System.out.println("Opening inventory");
         player.openInventory(inventory);
     }
 }
