@@ -22,7 +22,7 @@ public final class TradeRoutes extends JavaPlugin {
             }
             TraderDatabase.initialize(getDataFolder().getAbsolutePath() + "traders.db", this);
             getLogger().info("Successfully connected to database.");
-        } catch (SQLException e) {
+        } catch (SQLException | IllegalStateException e) {
             getLogger().severe("Failed to connect to database: " + e);
             getServer().getPluginManager().disablePlugin(this);
         }
@@ -48,8 +48,8 @@ public final class TradeRoutes extends JavaPlugin {
 
                 // Initialize database if NPC count is still 0 after 60 seconds or if the count stabilizes for 2 seconds
                 if ((currentNpcCount > 0 && unchangedTickCount >= 2) || unchangedTickCount >= 60) {
-                    initializeDatabase();
                     getServer().getScheduler().cancelTask(initDbTask.getTaskId());
+                    initializeDatabase();
                 }
             }
         }, 20L * 5, 20L); // Run every 20 ticks (1 second)
@@ -77,7 +77,13 @@ public final class TradeRoutes extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        // Plugin shutdown logic
+        // Close the database connection
+        try {
+            TraderDatabase.getInstance().closeConnection();
+            getLogger().info("Database connection closed successfully.");
+        } catch (Exception e) {
+            getLogger().warning("Failed to close database connection: " + e);
+        }
     }
 
     public static TradeRoutes getInstance() {
