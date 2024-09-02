@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 
 public class CommandManager implements CommandExecutor {
     protected NamedTextColor CMD_INFO_COLOR = NamedTextColor.BLUE;
-    protected NamedTextColor CMD_ERROR_COLOR = NamedTextColor.DARK_RED;
+    protected NamedTextColor CMD_ERROR_COLOR = NamedTextColor.RED;
 
     private static final TextColor ORANGE = TextColor.color(0xFFAE00);
 

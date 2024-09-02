@@ -91,7 +91,7 @@ public class Trader {
         }
     }
 
-    public List<TradeMission> getTradeMissions() {
+    public List<TradeMissionSpec> getTradeMissions() {
         // TODO: Implement persistent missions instead of random
 
         Map<String, Trader> traders = new HashMap<>(TraderDatabase.getInstance().getTraders());
@@ -103,7 +103,7 @@ public class Trader {
                 .toList();
 
         return sortedTraders.stream()
-                .map(trader -> TradeMission.createRandomMission(this, trader))
+                .map(trader -> TradeMissionSpec.createRandomMission(this, trader))
                 .toList();
     }
 

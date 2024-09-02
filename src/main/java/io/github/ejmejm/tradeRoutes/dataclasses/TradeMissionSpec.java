@@ -4,23 +4,23 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
 
-public class TradeMission {
+public class TradeMissionSpec {
     private Trader startTrader;
     private Trader endTrader;
     private List<ItemStack> requiredItems;
     private List<ItemStack> rewards;
 
-    public TradeMission(List<ItemStack> requiredItems, Trader startTrader, Trader endTrader, List<ItemStack> rewards) {
+    public TradeMissionSpec(List<ItemStack> requiredItems, Trader startTrader, Trader endTrader, List<ItemStack> rewards) {
         this.requiredItems = requiredItems;
         this.startTrader = startTrader;
         this.endTrader = endTrader;
         this.rewards = rewards;
     }
 
-    public static TradeMission createRandomMission(Trader startTrader, Trader endTrader) {
+    public static TradeMissionSpec createRandomMission(Trader startTrader, Trader endTrader) {
         List<ItemStack> requiredItems = generateTradeItems(100.0f, 500.0f, 2, 4, TradeList.REQUIRED_ITEMS);
         List<ItemStack> rewards = generateTradeItems(100.0f, 1000.0f, 2, 4, TradeList.REWARDS);
-        return new TradeMission(requiredItems, startTrader, endTrader, rewards);
+        return new TradeMissionSpec(requiredItems, startTrader, endTrader, rewards);
     }
 
     public List<ItemStack> getRequiredItems() {
@@ -43,12 +43,12 @@ public class TradeMission {
         return startTrader.getLocation().distance(endTrader.getLocation());
     }
 
-    public static TradeMission createFromStock(
+    public static TradeMissionSpec createFromStock(
             List<ItemStack> stockRequiredItems,
             List<ItemStack> stockRewards,
             Trader startTrader,
             Trader endTrader) {
-        return new TradeMission(stockRequiredItems, startTrader, endTrader, stockRewards);
+        return new TradeMissionSpec(stockRequiredItems, startTrader, endTrader, stockRewards);
     }
 
     public static List<ItemStack> generateTradeItems(

@@ -12,7 +12,7 @@ import java.lang.reflect.Method;
 public abstract class SubCommand {
 
     protected NamedTextColor CMD_INFO_COLOR = NamedTextColor.BLUE;
-    protected NamedTextColor CMD_ERROR_COLOR = NamedTextColor.DARK_RED;
+    protected NamedTextColor CMD_ERROR_COLOR = NamedTextColor.RED;
 
     @Retention(RetentionPolicy.RUNTIME)
     protected @interface ExpectPlayer { }

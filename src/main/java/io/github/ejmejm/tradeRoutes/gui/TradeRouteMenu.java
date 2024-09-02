@@ -1,6 +1,6 @@
 package io.github.ejmejm.tradeRoutes.gui;
 
-import io.github.ejmejm.tradeRoutes.dataclasses.TradeMission;
+import io.github.ejmejm.tradeRoutes.dataclasses.TradeMissionSpec;
 import io.github.ejmejm.tradeRoutes.dataclasses.Trader;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -15,26 +15,6 @@ import java.util.List;
 
 public class TradeRouteMenu extends Menu {
 
-    // Get all terracotta blocks
-    private static Material[] TRADE_ROUTE_BLOCKS = {
-            Material.WHITE_TERRACOTTA,
-            Material.ORANGE_TERRACOTTA,
-            Material.MAGENTA_TERRACOTTA,
-            Material.LIGHT_BLUE_TERRACOTTA,
-            Material.YELLOW_TERRACOTTA,
-            Material.LIME_TERRACOTTA,
-            Material.PINK_TERRACOTTA,
-            Material.GRAY_TERRACOTTA,
-            Material.LIGHT_GRAY_TERRACOTTA,
-            Material.CYAN_TERRACOTTA,
-            Material.PURPLE_TERRACOTTA,
-            Material.BLUE_TERRACOTTA,
-            Material.BROWN_TERRACOTTA,
-            Material.GREEN_TERRACOTTA,
-            Material.RED_TERRACOTTA,
-            Material.BLACK_TERRACOTTA
-    };
-
     public TradeRouteMenu(Trader trader) {
 
         //this.setSize(9*3);
@@ -44,7 +24,7 @@ public class TradeRouteMenu extends Menu {
         int tradeRouteCount = 0;
 
         // Add buttons for each trade destination
-        for (TradeMission mission : trader.getTradeMissions()) {
+        for (TradeMissionSpec mission : trader.getTradeMissions()) {
             if (tradeRouteCount >= maxTradeRoutes) break;
 
             // Truncate the distance to an integer
@@ -96,8 +76,7 @@ public class TradeRouteMenu extends Menu {
 
                 @Override
                 public void onClick(Player player) {
-                    player.sendMessage(NamedTextColor.GREEN + "Selected trader: " + affiliation + " at " + coordinates);
-                    // Implement additional actions when a trader is selected, if needed
+                    checkRequiredItems(player, mission);
                 }
             });
 
@@ -105,36 +84,85 @@ public class TradeRouteMenu extends Menu {
         }
     }
 
-//    private class ListPlayersMenu extends Menu {
-//
-//        public ListPlayersMenu() {
-//            super(TraderRouteMenu.this);
-//
-//            this.setSize(9 * 6);
-//            this.setTitle("Listing Players");
-//
-//            int startingSlot = 0;
-//
-//            for (final Player onlinePlayer : Bukkit.getOnlinePlayers()) {
-//                this.addButton(new Button(startingSlot++) {
-//                    @Override
-//                    public ItemStack getItem() {
-//                        final ItemStack item = new ItemStack(Material.PLAYER_HEAD);
-//                        final SkullMeta meta = (SkullMeta) item.getItemMeta();
-//                        meta.setDisplayName(ChatColor.WHITE + "Head Of " + onlinePlayer.getName());
-//                        meta.setOwningPlayer(onlinePlayer);
-//                        item.setItemMeta(meta);
-//
-//                        return item;
-//                        //return ItemCreator.of(CompMaterial.PLAYER_HEAD).skullOwner(onlinePlayer.getName()).make();
-//                    }
-//
-//                    @Override
-//                    public void onClick(Player player) {
-//                        player.sendMessage("You clicked player " + onlinePlayer.getName());
-//                    }
-//                });
-//            }
-//        }
-//    }
+    private void checkRequiredItems(Player player, TradeMissionSpec mission) {
+        List<ItemStack> missingItems = new ArrayList<>();
+        for (ItemStack requiredItem : mission.getRequiredItems()) {
+            if (!player.getInventory().containsAtLeast(requiredItem, requiredItem.getAmount())) {
+                missingItems.add(requiredItem);
+            }
+        }
+
+        if (missingItems.isEmpty()) {
+            new ConfirmMenu(mission).displayTo(player);
+        } else {
+            Component message = Component.text("You are missing the following items:", NamedTextColor.RED);
+            for (ItemStack item : missingItems) {
+                message = message.append(Component.newline())
+                        .append(Component.text("- " + item.getType(), NamedTextColor.DARK_BLUE)
+                                .append(Component.text(" (" + item.getAmount() + ")", NamedTextColor.AQUA)));
+            }
+            player.sendMessage(message);
+        }
+    }
+
+   private class ConfirmMenu extends Menu {
+
+       public ConfirmMenu(TradeMissionSpec missionSpec) {
+//           super(TraderRouteMenu.this);
+
+           this.setSize(9);
+           this.setTitle("Accept Trade Request?");
+
+            this.addButton(new Button(2) {
+                @Override
+                public ItemStack getItem() {
+                    final ItemStack item = new ItemStack(Material.RED_TERRACOTTA);
+                    final ItemMeta meta = item.getItemMeta();
+                    meta.displayName(Component.text("Deny", NamedTextColor.RED));
+                    item.setItemMeta(meta);
+                    return item;
+                }
+
+                @Override
+                public void onClick(Player player) {
+                    TradeRouteMenu outerMenu = TradeRouteMenu.this;
+                    outerMenu.displayTo(player);
+                }
+            });
+
+            this.addButton(new Button(6) {
+                @Override
+                public ItemStack getItem() {
+                    final ItemStack item = new ItemStack(Material.LIME_TERRACOTTA);
+                    final ItemMeta meta = item.getItemMeta();
+                    meta.displayName(Component.text("Confirm", NamedTextColor.GREEN));
+                    item.setItemMeta(meta);
+                    return item;
+                }
+
+                @Override
+                public void onClick(Player player) {
+                    initiateTradeMission(player, missionSpec);
+                    player.closeInventory();
+                }
+            });
+       }
+
+       private void initiateTradeMission(Player player, TradeMissionSpec missionSpec) {
+           String affiliation = missionSpec.getEndTrader().getAffiliation();
+           org.bukkit.Location location = missionSpec.getEndTrader().getLocation();
+           String coords = String.format("(%d, %d, %d)", location.getBlockX(), location.getBlockY(), location.getBlockZ());
+           Component message = Component.text("You have accepted a trade mission! ")
+                   .color(NamedTextColor.GREEN)
+                   .append(Component.text("Your destination is the Trader of ")
+                           .color(NamedTextColor.WHITE))
+                   .append(Component.text(affiliation.isEmpty() ? "unaffiliated trader" : affiliation)
+                           .color(NamedTextColor.GOLD))
+                   .append(Component.text(" at ")
+                           .color(NamedTextColor.WHITE))
+                   .append(Component.text(coords)
+                           .color(NamedTextColor.AQUA));
+           player.sendMessage(message);
+       }
+   }
 }
