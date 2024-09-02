@@ -8,6 +8,8 @@ import com.j256.ormlite.table.TableUtils;
 import de.oliver.fancynpcs.api.FancyNpcsPlugin;
 import de.oliver.fancynpcs.api.Npc;
 import de.oliver.fancynpcs.api.NpcManager;
+import io.github.ejmejm.tradeRoutes.dataclasses.ActiveTradeMission;
+import io.github.ejmejm.tradeRoutes.dataclasses.TradeMissionSpec;
 import io.github.ejmejm.tradeRoutes.dataclasses.Trader;
 import org.bukkit.plugin.Plugin;
 
@@ -20,6 +22,8 @@ public class TraderDatabase {
     private static TraderDatabase INSTANCE;
     private static ConnectionSource connectionSource;
     private static Dao<Trader, String> traderDao;
+    private static Dao<ActiveTradeMission, Integer> activeTradeMissionDao;
+    private static Dao<TradeMissionSpec, Integer> tradeMissionSpecDao;
     private static NpcManager npcManager;
     private static Plugin plugin;
 
@@ -27,9 +31,13 @@ public class TraderDatabase {
         // Connect to the database
         connectionSource = new JdbcConnectionSource("jdbc:sqlite:" + path);
         traderDao = DaoManager.createDao(connectionSource, Trader.class);
+        tradeMissionSpecDao = DaoManager.createDao(connectionSource, TradeMissionSpec.class);
+        activeTradeMissionDao = DaoManager.createDao(connectionSource, ActiveTradeMission.class);
 
-        // Create table if it doesn't exist
+        // Create tables if they don't exist
         TableUtils.createTableIfNotExists(connectionSource, Trader.class);
+        TableUtils.createTableIfNotExists(connectionSource, TradeMissionSpec.class);
+        TableUtils.createTableIfNotExists(connectionSource, ActiveTradeMission.class);
 
         TraderDatabase.plugin = plugin;
         npcManager = FancyNpcsPlugin.get().getNpcManager();
@@ -91,11 +99,18 @@ public class TraderDatabase {
 
         return true;
     }
-
     public void closeConnection() throws Exception {
-        if (connectionSource != null && connectionSource.isOpen("traders"))
+        if (connectionSource != null && (connectionSource.isOpen("traders")
+                        || connectionSource.isOpen("active_trade_missions")
+                        || connectionSource.isOpen("trade_mission_specs")
+            )) {
             connectionSource.close();
+        }
     }
+
+    /*****************
+     *    Traders    *
+     *****************/
 
     public void addTrader(Trader trader) throws SQLException {
         traderDao.create(trader);
@@ -143,5 +158,72 @@ public class TraderDatabase {
             TradeRoutes.getInstance().getLogger().severe("Could not get list of traders from database: " + e);
         }
         return traders.stream().collect(Collectors.toMap(Trader::getUUID, trader -> trader));
+    }
+
+    /*************************
+     * Active Trade Missions *
+     *************************/
+
+    public void addActiveTradeMission(ActiveTradeMission mission) throws SQLException {
+        activeTradeMissionDao.create(mission);
+    }
+
+    public void removeActiveTradeMission(int missionId) throws SQLException {
+        activeTradeMissionDao.deleteById(missionId);
+    }
+
+    public void removeActiveTradeMission(ActiveTradeMission mission) throws SQLException {
+        activeTradeMissionDao.delete(mission);
+    }
+
+    public boolean updateActiveTradeMission(ActiveTradeMission mission) throws SQLException {
+        return activeTradeMissionDao.update(mission) == 1;
+    }
+
+    public Optional<ActiveTradeMission> getActiveTradeMissionById(int missionId) throws SQLException {
+        return Optional.ofNullable(activeTradeMissionDao.queryForId(missionId));
+    }
+    public Optional<ActiveTradeMission> getActiveTradeMissionByPlayer(UUID playerUUID) throws SQLException {
+        return Optional.ofNullable(activeTradeMissionDao.queryBuilder()
+                .where().eq("playerUUID", playerUUID)
+                .queryForFirst());
+    }
+
+    public List<ActiveTradeMission> getAllActiveTradeMissions() throws SQLException {
+        return activeTradeMissionDao.queryForAll();
+    }
+
+    /*************************
+     * Trade Mission Specs   *
+     *************************/
+
+     public void addTradeMissionSpec(TradeMissionSpec missionSpec) throws SQLException {
+        tradeMissionSpecDao.create(missionSpec);
+    }
+
+    public void removeTradeMissionSpec(int missionSpecId) throws SQLException {
+        tradeMissionSpecDao.deleteById(missionSpecId);
+    }
+
+    public void removeTradeMissionSpec(TradeMissionSpec missionSpec) throws SQLException {
+        tradeMissionSpecDao.delete(missionSpec);
+    }
+
+    public boolean updateTradeMissionSpec(TradeMissionSpec missionSpec) throws SQLException {
+        return tradeMissionSpecDao.update(missionSpec) == 1;
+    }
+
+    public Optional<TradeMissionSpec> getTradeMissionSpecById(int missionSpecId) throws SQLException {
+        return Optional.ofNullable(tradeMissionSpecDao.queryForId(missionSpecId));
+    }
+
+    public List<TradeMissionSpec> getTradeMissionSpecsByStartTrader(Trader startTrader) throws SQLException {
+        return tradeMissionSpecDao.queryBuilder()
+                .where().eq("startTrader_id", startTrader.getUUID())
+                .query();
+    }
+
+    public List<TradeMissionSpec> getAllTradeMissionSpecs() throws SQLException {
+        return tradeMissionSpecDao.queryForAll();
     }
 }

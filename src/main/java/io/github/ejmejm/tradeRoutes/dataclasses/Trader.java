@@ -9,6 +9,8 @@ import de.oliver.fancynpcs.api.utils.SkinFetcher;
 import io.github.ejmejm.tradeRoutes.TradeRoutes;
 import io.github.ejmejm.tradeRoutes.TraderDatabase;
 import io.github.ejmejm.tradeRoutes.gui.TradeRouteMenu;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
@@ -77,7 +79,23 @@ public class Trader {
     }
 
     private void onClick(Player player) {
-        new TradeRouteMenu(this).displayTo(player);
+        try {
+            Optional<ActiveTradeMission> activeMission = TraderDatabase.getInstance().getActiveTradeMissionByPlayer(player.getUniqueId());
+            if (activeMission.isEmpty()) {
+                new TradeRouteMenu(this).displayTo(player);
+            } else {
+                if (activeMission.get().getMissionSpec().getEndTrader().getUUID().equals(this.getUUID())) {
+                    activeMission.get().checkAndCompleteMission();
+                } else {
+                    player.sendMessage(Component.text(
+                            "You already have an active mission that must be finished "
+                            + "before interacting with other traders.",NamedTextColor.RED
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            TradeRoutes.getInstance().getLogger().severe("Failed to check active trade missions: " + e.getMessage());
+        }
     }
 
     public boolean connectToNpcManager() {

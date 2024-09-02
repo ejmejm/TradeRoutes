@@ -1,5 +1,6 @@
 package io.github.ejmejm.tradeRoutes.gui;
 
+import io.github.ejmejm.tradeRoutes.dataclasses.ActiveTradeMission;
 import io.github.ejmejm.tradeRoutes.dataclasses.TradeMissionSpec;
 import io.github.ejmejm.tradeRoutes.dataclasses.Trader;
 import net.kyori.adventure.text.Component;
@@ -108,8 +109,6 @@ public class TradeRouteMenu extends Menu {
    private class ConfirmMenu extends Menu {
 
        public ConfirmMenu(TradeMissionSpec missionSpec) {
-//           super(TraderRouteMenu.this);
-
            this.setSize(9);
            this.setTitle("Accept Trade Request?");
 
@@ -149,9 +148,17 @@ public class TradeRouteMenu extends Menu {
        }
 
        private void initiateTradeMission(Player player, TradeMissionSpec missionSpec) {
+            ActiveTradeMission mission = ActiveTradeMission.initiateMission(player, missionSpec);
+
+            if (mission == null) {
+                player.sendMessage(Component.text("Failed to initiate trade mission. Report this bug to an admin.", NamedTextColor.RED));
+                return;
+            }
+
            String affiliation = missionSpec.getEndTrader().getAffiliation();
            org.bukkit.Location location = missionSpec.getEndTrader().getLocation();
            String coords = String.format("(%d, %d, %d)", location.getBlockX(), location.getBlockY(), location.getBlockZ());
+
            Component message = Component.text("You have accepted a trade mission! ")
                    .color(NamedTextColor.GREEN)
                    .append(Component.text("Your destination is the Trader of ")
@@ -162,6 +169,7 @@ public class TradeRouteMenu extends Menu {
                            .color(NamedTextColor.WHITE))
                    .append(Component.text(coords)
                            .color(NamedTextColor.AQUA));
+
            player.sendMessage(message);
        }
    }
