@@ -2,7 +2,7 @@ package io.github.ejmejm.tradeRoutes;
 
 import de.oliver.fancynpcs.api.FancyNpcsPlugin;
 import io.github.ejmejm.tradeRoutes.events.CaravanDeathListener;
-import io.github.ejmejm.tradeRoutes.gui.MenuListener;
+import io.github.ejmejm.tradeRoutes.events.MenuListener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
@@ -19,7 +19,12 @@ public final class TradeRoutes extends JavaPlugin {
         try {
             getLogger().info("Attempting to connect to database.");
             if (!getDataFolder().exists()) {
-                getDataFolder().mkdirs();
+                boolean created = getDataFolder().mkdirs();
+                if (!created) {
+                    getLogger().severe("Failed to create data folder. Disabling plugin.");
+                    getServer().getPluginManager().disablePlugin(this);
+                    return;
+                }
             }
             TraderDatabase.initialize(getDataFolder().getAbsolutePath() + "traders.db", this);
             getLogger().info("Successfully connected to database.");

@@ -2,6 +2,8 @@ package io.github.ejmejm.tradeRoutes.dataclasses;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
+import io.github.ejmejm.tradeRoutes.Constants;
+import io.github.ejmejm.tradeRoutes.ItemUtils;
 import io.github.ejmejm.tradeRoutes.TradeRoutes;
 import io.github.ejmejm.tradeRoutes.TraderDatabase;
 import net.kyori.adventure.text.Component;
@@ -14,6 +16,7 @@ import org.bukkit.entity.Camel;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.sql.SQLException;
@@ -59,7 +62,6 @@ public class ActiveTradeMission {
         for (ItemStack requiredItem : missionSpec.getRequiredItems()) {
             player.getInventory().removeItem(requiredItem);
         }
-
         // Spawn and setup camel
         Location spawnLocation = player.getLocation();
         Camel camel = (Camel) player.getWorld().spawnEntity(spawnLocation, EntityType.CAMEL);
@@ -68,6 +70,12 @@ public class ActiveTradeMission {
         camel.setHealth(CAMEL_HEALTH);
         camel.setRemoveWhenFarAway(false);
         camel.setLeashHolder(player);
+
+        // Store required items in persistent data container
+        NamespacedKey dropsKey = new NamespacedKey(TradeRoutes.getInstance(), Constants.DEATH_ITEMS_META_KEY);
+        PersistentDataContainer container = camel.getPersistentDataContainer();
+        container.set(
+                dropsKey, PersistentDataType.STRING, ItemUtils.serializeItemStacks(missionSpec.getRequiredItems()));
 
         // Create and save new ActiveTradeMission
         Date startTime = new Date();
@@ -82,7 +90,7 @@ public class ActiveTradeMission {
             db.addActiveTradeMission(mission);
 
             // Store mission ID in the camel's persistent data
-            NamespacedKey key = new NamespacedKey(TradeRoutes.getInstance(), "trade_mission_id");
+            NamespacedKey key = new NamespacedKey(TradeRoutes.getInstance(), Constants.CARAVAN_MISSION_META_KEY);
             camel.getPersistentDataContainer().set(key, PersistentDataType.INTEGER, mission.getId());
         } catch (SQLException e) {
             TradeRoutes.getInstance().getLogger().severe(
@@ -127,7 +135,7 @@ public class ActiveTradeMission {
         return true;
     }
 
-    public boolean failMission(String failureMessage) {
+    public void failMission(String failureMessage) {
         // Remove mission from database
         try {
             TraderDatabase db = TraderDatabase.getInstance();
@@ -135,20 +143,19 @@ public class ActiveTradeMission {
             db.removeActiveTradeMission(this);
         } catch (SQLException e) {
             TradeRoutes.getInstance().getLogger().severe("Failed to remove failed mission from database: " + e.getMessage());
-            return false;
+            return;
         }
 
         Player player = Bukkit.getPlayer(playerUUID);
         if (player != null) {
             // Send failure message
-            if (failureMessage == null) {
-                player.sendMessage(Component.text("Trade mission failed. Better luck next time!", NamedTextColor.RED));
-            } else {
-                player.sendMessage(Component.text(failureMessage, NamedTextColor.RED));
-            }
+            player.sendMessage(Component.text(
+                    Objects.requireNonNullElse(
+                            failureMessage,
+                            "Trade mission failed. Better luck next time!"
+                    ), NamedTextColor.RED));
         }
 
-        return true;
     }
 
     public void checkAndCompleteMission() {

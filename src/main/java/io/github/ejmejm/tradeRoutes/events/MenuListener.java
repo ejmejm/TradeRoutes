@@ -2,9 +2,11 @@
  * Source: https://github.com/kangarko/CowCannon/blob/master/src/main/java/org/mineacademy/cowcannon/gui/MenuListener.java
  */
 
-package io.github.ejmejm.tradeRoutes.gui;
+package io.github.ejmejm.tradeRoutes.events;
 
 import io.github.ejmejm.tradeRoutes.TradeRoutes;
+import io.github.ejmejm.tradeRoutes.gui.Button;
+import io.github.ejmejm.tradeRoutes.gui.Menu;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;

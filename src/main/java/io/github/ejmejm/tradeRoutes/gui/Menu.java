@@ -19,7 +19,7 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-import static io.github.ejmejm.tradeRoutes.gui.MenuListener.IN_MENU_METADATA;
+import static io.github.ejmejm.tradeRoutes.events.MenuListener.IN_MENU_METADATA;
 
 public class Menu {
 

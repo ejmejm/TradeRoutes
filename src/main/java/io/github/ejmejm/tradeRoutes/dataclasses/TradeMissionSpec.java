@@ -1,12 +1,10 @@
 package io.github.ejmejm.tradeRoutes.dataclasses;
 
-import com.google.common.reflect.TypeToken;
-import com.google.gson.Gson;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
+import io.github.ejmejm.tradeRoutes.ItemUtils;
 import org.bukkit.inventory.ItemStack;
 
-import java.lang.reflect.Type;
 import java.util.*;
 
 @DatabaseTable(tableName = "trade_mission_specs")
@@ -34,8 +32,8 @@ public class TradeMissionSpec {
     public TradeMissionSpec() {}
 
     public TradeMissionSpec(List<ItemStack> requiredItems, Trader startTrader, Trader endTrader, List<ItemStack> rewards) {
-        this.requiredItemsSerialized = serializeItemStacks(requiredItems);
-        this.rewardsSerialized = serializeItemStacks(rewards);
+        this.requiredItemsSerialized = ItemUtils.serializeItemStacks(requiredItems);
+        this.rewardsSerialized = ItemUtils.serializeItemStacks(rewards);
         this.requiredItems = new ArrayList<>(requiredItems);
         this.rewards = new ArrayList<>(rewards);
         this.startTrader = startTrader;
@@ -113,49 +111,29 @@ public class TradeMissionSpec {
         // Final check: if totalValue is still below minValue, just return what was generated
         return generatedItems;
     }
-    
-    private String serializeItemStacks(List<ItemStack> items) {
-        Gson gson = new Gson();
-        List<Map<String, Object>> serializedItems = new ArrayList<>();
-        for (ItemStack item : items) {
-            serializedItems.add(item.serialize());
-        }
-        return gson.toJson(serializedItems);
-    }
-
-    private List<ItemStack> deserializeItemStacks(String serialized) {
-        Gson gson = new Gson();
-        Type listType = new TypeToken<List<Map<String, Object>>>(){}.getType();
-        List<Map<String, Object>> serializedItems = gson.fromJson(serialized, listType);
-        List<ItemStack> items = new ArrayList<>();
-        for (Map<String, Object> serializedItem : serializedItems) {
-            items.add(ItemStack.deserialize(serializedItem));
-        }
-        return items;
-    }
 
     // Update getters and setters to use the serialized fields
     public List<ItemStack> getRequiredItems() {
         if (requiredItems == null) {
-            requiredItems = deserializeItemStacks(requiredItemsSerialized);
+            requiredItems = ItemUtils.deserializeItemStacks(requiredItemsSerialized);
         }
         return requiredItems;
     }
 
     public void setRequiredItems(List<ItemStack> requiredItems) {
-        this.requiredItemsSerialized = serializeItemStacks(requiredItems);
+        this.requiredItemsSerialized = ItemUtils.serializeItemStacks(requiredItems);
         this.requiredItems = new ArrayList<>(requiredItems);
     }
 
     public List<ItemStack> getRewards() {
         if (rewards == null) {
-            rewards = deserializeItemStacks(rewardsSerialized);
+            rewards = ItemUtils.deserializeItemStacks(rewardsSerialized);
         }
         return rewards;
     }
 
     public void setRewards(List<ItemStack> rewards) {
-        this.rewardsSerialized = serializeItemStacks(rewards);
+        this.rewardsSerialized = ItemUtils.serializeItemStacks(rewards);
         this.rewards = new ArrayList<>(rewards);
     }
 
