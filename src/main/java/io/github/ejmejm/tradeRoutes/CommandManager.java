@@ -1,25 +1,26 @@
 package io.github.ejmejm.tradeRoutes;
 
+import io.github.ejmejm.tradeRoutes.subcommands.CancelMissionCommand;
+import io.github.ejmejm.tradeRoutes.subcommands.ConfirmCommand;
 import io.github.ejmejm.tradeRoutes.subcommands.ListCommand;
 import io.github.ejmejm.tradeRoutes.subcommands.SpawnTraderCommand;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.time.Instant;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class CommandManager implements CommandExecutor {
-    protected NamedTextColor CMD_INFO_COLOR = NamedTextColor.BLUE;
-    protected NamedTextColor CMD_ERROR_COLOR = NamedTextColor.RED;
-
-    private static final TextColor ORANGE = TextColor.color(0xFFAE00);
+    protected static final NamedTextColor CMD_INFO_COLOR = NamedTextColor.BLUE;
+    protected static final NamedTextColor CMD_ERROR_COLOR = NamedTextColor.RED;
+    
+    public record PendingConfirmation(ConfirmCommand.ConfirmationType type, Instant timestamp) {}
+    private static final Map<UUID, PendingConfirmation> pendingConfirmations = new HashMap<>();
 
     private final Map<String, SubCommand> subcommands;
 
@@ -30,7 +31,9 @@ public class CommandManager implements CommandExecutor {
     public CommandManager() {
         List<SubCommand> commandList = Arrays.asList(
                 new ListCommand(),
-                new SpawnTraderCommand()
+                new SpawnTraderCommand(),
+                new CancelMissionCommand(),
+                new ConfirmCommand()
         );
         subcommands = commandList.stream()
                 .collect(Collectors.toMap(
@@ -83,6 +86,18 @@ public class CommandManager implements CommandExecutor {
 
     public Map<String, SubCommand> getSubcommands(){
         return subcommands;
+    }
+
+    public static void setPendingConfirmation(UUID playerUUID, ConfirmCommand.ConfirmationType type) {
+        pendingConfirmations.put(playerUUID, new PendingConfirmation(type, Instant.now()));
+    }
+
+    public static PendingConfirmation getPendingConfirmation(UUID playerUUID) {
+        return pendingConfirmations.get(playerUUID);
+    }
+
+    public static void clearPendingConfirmation(UUID playerUUID) {
+        pendingConfirmations.remove(playerUUID);
     }
 
 }

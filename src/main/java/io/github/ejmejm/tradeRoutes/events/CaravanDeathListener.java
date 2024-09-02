@@ -5,6 +5,8 @@ import io.github.ejmejm.tradeRoutes.ItemUtils;
 import io.github.ejmejm.tradeRoutes.TradeRoutes;
 import io.github.ejmejm.tradeRoutes.TraderDatabase;
 import io.github.ejmejm.tradeRoutes.dataclasses.ActiveTradeMission;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
@@ -65,7 +67,9 @@ public class CaravanDeathListener implements Listener {
                 }
 
                 // Fail the mission
-                mission.get().failMission("Trade mission failed - your pack animal died!");
+                mission.get().failMission(
+                        Component.text("Trade mission failed", NamedTextColor.DARK_RED)
+                                .append(Component.text(" - your pack animal died!", NamedTextColor.WHITE)));
             } else {
                 TradeRoutes.getInstance().getLogger().warning(
                         "Deceased entity had mission metadata, but the "

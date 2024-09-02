@@ -13,7 +13,7 @@ import org.bukkit.command.CommandSender;
 import java.util.Map;
 
 public class ListCommand extends SubCommand {
-    private static TextColor[] affiliationColors = {
+    private static final TextColor[] affiliationColors = {
             NamedTextColor.GOLD,
             NamedTextColor.LIGHT_PURPLE,
             NamedTextColor.DARK_PURPLE,

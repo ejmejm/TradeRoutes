@@ -52,13 +52,13 @@ public final class TradeRoutes extends JavaPlugin {
                     unchangedTickCount++;
                 }
 
-                // Initialize database if NPC count is still 0 after 60 seconds or if the count stabilizes for 2 seconds
+                // Initialize database if NPC count is still 0 after 30 seconds or if the count stabilizes for 1 second
                 if ((currentNpcCount > 0 && unchangedTickCount >= 2) || unchangedTickCount >= 60) {
                     getServer().getScheduler().cancelTask(initDbTask.getTaskId());
                     initializeDatabase();
                 }
             }
-        }, 20L * 5, 20L); // Run every 20 ticks (1 second)
+        }, 20L * 5, 10L); // Run every 10 ticks (0.5 seconds)
     }
 
     @Override

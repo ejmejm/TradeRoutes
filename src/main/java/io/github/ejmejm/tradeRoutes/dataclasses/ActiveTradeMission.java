@@ -26,7 +26,7 @@ import java.util.*;
 public class ActiveTradeMission {
 
     private static final int MISSION_DURATION = 72 * 60 * 60 * 1000; // 72 hours in milliseconds
-    private static final float CAMEL_HEALTH = 40.0f;
+    private static final float CAMEL_HEALTH = 80.0f;
 
     @DatabaseField(generatedId = true)
     private int id;
@@ -135,7 +135,7 @@ public class ActiveTradeMission {
         return true;
     }
 
-    public void failMission(String failureMessage) {
+    public void failMission(Component failureMessage) {
         // Remove mission from database
         try {
             TraderDatabase db = TraderDatabase.getInstance();
@@ -149,11 +149,10 @@ public class ActiveTradeMission {
         Player player = Bukkit.getPlayer(playerUUID);
         if (player != null) {
             // Send failure message
-            player.sendMessage(Component.text(
-                    Objects.requireNonNullElse(
-                            failureMessage,
-                            "Trade mission failed. Better luck next time!"
-                    ), NamedTextColor.RED));
+            player.sendMessage(Objects.requireNonNullElse(
+                    failureMessage,
+                    Component.text("Trade mission failed. Better luck next time!", NamedTextColor.RED)
+            ));
         }
 
     }
