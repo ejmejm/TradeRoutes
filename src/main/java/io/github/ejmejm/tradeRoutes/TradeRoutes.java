@@ -1,6 +1,7 @@
 package io.github.ejmejm.tradeRoutes;
 
 import de.oliver.fancynpcs.api.FancyNpcsPlugin;
+import io.github.ejmejm.tradeRoutes.events.CaravanDeathListener;
 import io.github.ejmejm.tradeRoutes.gui.MenuListener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -62,7 +63,8 @@ public final class TradeRoutes extends JavaPlugin {
 
         // Register event listeners
         getServer().getPluginManager().registerEvents(new MenuListener(), this);
-
+        getServer().getPluginManager().registerEvents(new CaravanDeathListener(), this);
+    
         // Prepare NPCs
         Plugin fancyNpcs = getServer().getPluginManager().getPlugin("FancyNpcs");
         if (fancyNpcs == null || !fancyNpcs.isEnabled()) {
