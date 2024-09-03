@@ -13,6 +13,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class TradeRouteMenu extends Menu {
 
@@ -69,6 +70,17 @@ public class TradeRouteMenu extends Menu {
                         lore.add(Component.text("- " + requestedItem.getType(), NamedTextColor.BLUE)
                                 .append(Component.text(" (" + requestedItem.getAmount() + ")", NamedTextColor.AQUA)));
                     }
+                    // Mark as taken if taken
+                    if (mission.getTaken()) {
+                        lore = lore.stream()
+                                .map(component -> component
+                                        .decoration(TextDecoration.STRIKETHROUGH, true)
+                                        .color(NamedTextColor.GRAY))
+                                .collect(Collectors.toList());
+
+                        lore.add(Component.text(""));
+                        lore.add(Component.text("IN PROGRESS", NamedTextColor.RED, TextDecoration.BOLD));
+                    }
 
                     meta.lore(lore);
                     item.setItemMeta(meta);
@@ -77,7 +89,7 @@ public class TradeRouteMenu extends Menu {
 
                 @Override
                 public void onClick(Player player) {
-                    checkRequiredItems(player, mission);
+                    checkMissionRequirements(player, trader, mission);
                 }
             });
 
@@ -85,7 +97,13 @@ public class TradeRouteMenu extends Menu {
         }
     }
 
-    private void checkRequiredItems(Player player, TradeMissionSpec mission) {
+    private void checkMissionRequirements(Player player, Trader trader, TradeMissionSpec mission) {
+        if (mission.getTaken()) {
+            player.sendMessage(Component.text(
+                "This mission has already been taken by another player.", NamedTextColor.RED));
+            return;
+        }
+
         List<ItemStack> missingItems = new ArrayList<>();
         for (ItemStack requiredItem : mission.getRequiredItems()) {
             if (!player.getInventory().containsAtLeast(requiredItem, requiredItem.getAmount())) {
@@ -94,7 +112,7 @@ public class TradeRouteMenu extends Menu {
         }
 
         if (missingItems.isEmpty()) {
-            new ConfirmMenu(mission).displayTo(player);
+            new ConfirmMenu(trader, mission).displayTo(player);
         } else {
             Component message = Component.text("You are missing the following items:", NamedTextColor.RED);
             for (ItemStack item : missingItems) {
@@ -108,7 +126,7 @@ public class TradeRouteMenu extends Menu {
 
    private class ConfirmMenu extends Menu {
 
-       public ConfirmMenu(TradeMissionSpec missionSpec) {
+       public ConfirmMenu(Trader trader, TradeMissionSpec missionSpec) {
            this.setSize(9);
            this.setTitle("Accept Trade Request?");
 
@@ -141,23 +159,26 @@ public class TradeRouteMenu extends Menu {
 
                 @Override
                 public void onClick(Player player) {
-                    initiateTradeMission(player, missionSpec);
+                    initiateTradeMission(player, trader, missionSpec);
                     player.closeInventory();
                 }
             });
        }
 
-       private void initiateTradeMission(Player player, TradeMissionSpec missionSpec) {
+       private void initiateTradeMission(Player player, Trader trader, TradeMissionSpec missionSpec) {
             ActiveTradeMission mission = ActiveTradeMission.initiateMission(player, missionSpec);
 
             if (mission == null) {
-                player.sendMessage(Component.text("Failed to initiate trade mission. Report this bug to an admin.", NamedTextColor.RED));
+                player.sendMessage(Component.text(
+                        "Failed to initiate trade mission. Report this bug to an admin.", NamedTextColor.RED));
                 return;
             }
+           missionSpec.setTaken(true);
 
            String affiliation = missionSpec.getEndTrader().getAffiliation();
            org.bukkit.Location location = missionSpec.getEndTrader().getLocation();
-           String coords = String.format("(%d, %d, %d)", location.getBlockX(), location.getBlockY(), location.getBlockZ());
+           String coords = String.format(
+                   "(%d, %d, %d)", location.getBlockX(), location.getBlockY(), location.getBlockZ());
 
            Component message = Component.text("You have accepted a trade mission! ")
                    .color(NamedTextColor.GREEN)

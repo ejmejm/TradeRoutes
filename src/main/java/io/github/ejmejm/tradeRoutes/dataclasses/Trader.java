@@ -188,7 +188,6 @@ public class Trader {
             updateSerializedMissionData();
         }
     }
-
     /**
      * Replaces expired missions with new ones.
      */
@@ -217,6 +216,64 @@ public class Trader {
 
         if (missionsUpdated)
             updateSerializedMissionData();
+    }
+    
+    /**
+     * Replaces a single mission with a new one for the same end trader.
+     *
+     * @param oldMission The mission spec to be replaced.
+     * @param deleteFromDatabase Whether to delete the old mission from the database.
+     */
+    public void replaceMission(TradeMissionSpec oldMission, boolean deleteFromDatabase) {
+        // Find the mission that contains the old mission spec
+        TraderMission missionToRemove = currentMissions.stream()
+            .filter(mission -> mission.getMissionSpec().equals(oldMission))
+            .findFirst()
+            .orElse(null);
+
+        if (missionToRemove == null)
+            return;
+        currentMissions.remove(missionToRemove);
+
+        try {
+            if (deleteFromDatabase)
+                TraderDatabase.getInstance().removeTradeMissionSpec(oldMission);
+
+            Trader endTrader = oldMission.getEndTrader();
+            if (TraderDatabase.getInstance().traderExists(endTrader.getUUID())) {
+                addNewMission(endTrader, Instant.now());
+            }
+            updateSerializedMissionData();
+        } catch (SQLException e) {
+            TradeRoutes.getInstance().getLogger().severe("Failed to replace mission: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Removes a single mission without replacing it.
+     *
+     * @param missionToRemove The mission spec to be removed.
+     * @param deleteFromDatabase Whether to delete the mission from the database.
+     */
+    public void removeMission(TradeMissionSpec missionToRemove, boolean deleteFromDatabase) {
+        // Find the mission that contains the mission spec to remove
+        TraderMission missionToDelete = currentMissions.stream()
+            .filter(mission -> mission.getMissionSpec().equals(missionToRemove))
+            .findFirst()
+            .orElse(null);
+
+        if (missionToDelete == null)
+            return;
+        currentMissions.remove(missionToDelete);
+
+        try {
+            if (deleteFromDatabase)
+                TraderDatabase.getInstance().removeTradeMissionSpec(missionToRemove);
+
+            updateSerializedMissionData();
+        } catch (SQLException e) {
+            TradeRoutes.getInstance().getLogger().severe("Failed to remove mission: " + e.getMessage());
+        }
     }
 
     /**
@@ -305,6 +362,8 @@ public class Trader {
         public TradeMissionSpec getMissionSpec() {
             if (missionSpec == null) {
                 try {
+                    // TODO: Figure out a more graceful way to handle this
+                    //       Maybe just gen a new mission spec?
                     missionSpec = TraderDatabase.getInstance().getTradeMissionSpecById(missionSpecId).orElseThrow();
                 } catch (SQLException e) {
                     throw new RuntimeException(e);

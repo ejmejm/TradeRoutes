@@ -25,6 +25,9 @@ public class TradeMissionSpec {
     @DatabaseField
     private String rewardsSerialized;
 
+    @DatabaseField
+    private boolean taken;
+
     // Transient fields for quick access
     private transient List<ItemStack> requiredItems;
     private transient List<ItemStack> rewards;
@@ -38,6 +41,7 @@ public class TradeMissionSpec {
         this.rewards = new ArrayList<>(rewards);
         this.startTrader = startTrader;
         this.endTrader = endTrader;
+        this.taken = false;
     }
 
     public static TradeMissionSpec createRandomMission(Trader startTrader, Trader endTrader) {
@@ -151,5 +155,13 @@ public class TradeMissionSpec {
 
     public double getRouteDistance() {
         return startTrader.getLocation().distance(endTrader.getLocation());
+    }
+
+    public boolean getTaken() {
+        return taken;
+    }
+
+    public void setTaken(boolean taken) {
+        this.taken = taken;
     }
 }

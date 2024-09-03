@@ -86,7 +86,7 @@ public class ActiveTradeMission {
 
         try {
             TraderDatabase db = TraderDatabase.getInstance();
-            db.addTradeMissionSpec(missionSpec);
+            db.updateTradeMissionSpec(missionSpec);
             db.addActiveTradeMission(mission);
 
             // Store mission ID in the camel's persistent data
