@@ -84,6 +84,8 @@ public class ActiveTradeMission {
         ActiveTradeMission mission = new ActiveTradeMission(
                 missionSpec, player.getUniqueId(), camel.getUniqueId(), startTime, expiryTime);
 
+        missionSpec.setTaken(true);
+
         try {
             TraderDatabase db = TraderDatabase.getInstance();
             db.updateTradeMissionSpec(missionSpec);
@@ -105,7 +107,7 @@ public class ActiveTradeMission {
         // Remove mission from database
         try {
             TraderDatabase db = TraderDatabase.getInstance();
-            db.removeTradeMissionSpec(missionSpec);
+            replaceOriginalMission();
             db.removeActiveTradeMission(this);
         } catch (SQLException e) {
             TradeRoutes.getInstance().getLogger().severe("Failed to remove completed mission from database: " + e.getMessage());
@@ -139,7 +141,8 @@ public class ActiveTradeMission {
         // Remove mission from database
         try {
             TraderDatabase db = TraderDatabase.getInstance();
-            db.removeTradeMissionSpec(missionSpec);
+            if (!startStillHasMission())
+                db.removeTradeMissionSpec(missionSpec);
             db.removeActiveTradeMission(this);
         } catch (SQLException e) {
             TradeRoutes.getInstance().getLogger().severe("Failed to remove failed mission from database: " + e.getMessage());
@@ -191,6 +194,18 @@ public class ActiveTradeMission {
             
             player.sendMessage(message);
         }
+    }
+
+    private boolean startStillHasMission() {
+        return missionSpec.getStartTrader().getTradeMissions().stream()
+            .anyMatch(spec -> spec.getId() == missionSpec.getId());
+    }
+
+    /*
+     * Replaces the mission at the trader it came from if it is still there.
+     */
+    private void replaceOriginalMission() {
+        missionSpec.getStartTrader().replaceMission(missionSpec, true);
     }
 
     // Getters and setters

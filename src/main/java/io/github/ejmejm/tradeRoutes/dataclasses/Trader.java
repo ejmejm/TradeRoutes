@@ -114,11 +114,13 @@ public class Trader {
      * @param player The player who clicked on the Trader.
      */
     private void onClick(Player player) {
+        TraderDatabase db = TraderDatabase.getInstance();
         try {
             Optional<ActiveTradeMission> activeMission =
-                    TraderDatabase.getInstance().getActiveTradeMissionByPlayer(player.getUniqueId());
+                    db.getActiveTradeMissionByPlayer(player.getUniqueId());
             if (activeMission.isEmpty()) {
-                new TradeRouteMenu(this).displayTo(player);
+                db.getTraderById(getUUID()).ifPresent(
+                        trader -> new TradeRouteMenu(trader).displayTo(player));
             } else {
                 if (activeMission.get().getMissionSpec().getEndTrader().getUUID().equals(this.getUUID())) {
                     activeMission.get().checkAndCompleteMission();
@@ -158,8 +160,7 @@ public class Trader {
      * @return A list of TradeMissionSpec objects representing the current trade missions.
      */
     public List<TradeMissionSpec> getTradeMissions() {
-        if (currentMissions == null)
-            initializeMissions();
+        List<TraderMission> currentMissions = getCurrentMissions();
         
         replaceExpiredMissions();
 
@@ -174,9 +175,16 @@ public class Trader {
      * If serialized mission data exists, it deserializes it.
      * Otherwise, it creates new missions for all other Traders.
      */
-    private void initializeMissions() {
+    public void initializeMissions() {
         if (serializedMissionData != null && !serializedMissionData.isEmpty()) {
             currentMissions = deserializeMissionData();
+            for (TraderMission mission : currentMissions) {
+                if (mission.getMissionSpec() == null) {
+                    TradeRoutes.getInstance().getLogger().severe(
+                            "Mission spec is null for mission " + mission.getMissionSpecId());
+                    replaceMission(mission.getMissionSpecId(), true);
+                }
+            }
         } else {
             currentMissions = new ArrayList<>();
             Map<String, Trader> allTraders = TraderDatabase.getInstance().getTraders();
@@ -188,6 +196,7 @@ public class Trader {
             updateSerializedMissionData();
         }
     }
+
     /**
      * Replaces expired missions with new ones.
      */
@@ -195,14 +204,14 @@ public class Trader {
         Instant now = Instant.now();
         boolean missionsUpdated = false;
 
-        List<TraderMission> expiredMissions = currentMissions.stream()
+        List<TraderMission> expiredMissions = getCurrentMissions().stream()
             .filter(mission -> mission.getExpirationTime().isBefore(now))
             .toList();
 
         for (TraderMission expiredMission : expiredMissions) {
             Trader endTrader = expiredMission.getMissionSpec().getEndTrader();
             try {
-                currentMissions.remove(expiredMission);
+                getCurrentMissions().remove(expiredMission);
                 TraderDatabase.getInstance().removeTradeMissionSpec(expiredMission.getMissionSpec());
                 missionsUpdated = true;
 
@@ -220,32 +229,70 @@ public class Trader {
     
     /**
      * Replaces a single mission with a new one for the same end trader.
+     * If the mission spec is null (db retrieval problem), then it is just deleted.
      *
-     * @param oldMission The mission spec to be replaced.
+     * @param oldMissionId The mission spec to be replaced.
      * @param deleteFromDatabase Whether to delete the old mission from the database.
      */
-    public void replaceMission(TradeMissionSpec oldMission, boolean deleteFromDatabase) {
+    public void replaceMission(int oldMissionId, boolean deleteFromDatabase) {
         // Find the mission that contains the old mission spec
-        TraderMission missionToRemove = currentMissions.stream()
-            .filter(mission -> mission.getMissionSpec().equals(oldMission))
+        TraderMission missionToRemove = getCurrentMissions().stream()
+            .filter(mission -> mission.getMissionSpecId() == oldMissionId)
             .findFirst()
             .orElse(null);
 
         if (missionToRemove == null)
             return;
-        currentMissions.remove(missionToRemove);
+        getCurrentMissions().remove(missionToRemove);
 
         try {
-            if (deleteFromDatabase)
-                TraderDatabase.getInstance().removeTradeMissionSpec(oldMission);
+            TradeMissionSpec oldMissionSpec = missionToRemove.getMissionSpec();
+            if (oldMissionSpec != null) {
+                if (deleteFromDatabase)
+                    TraderDatabase.getInstance().removeTradeMissionSpec(oldMissionSpec);
 
-            Trader endTrader = oldMission.getEndTrader();
-            if (TraderDatabase.getInstance().traderExists(endTrader.getUUID())) {
-                addNewMission(endTrader, Instant.now());
+                Trader endTrader = oldMissionSpec.getEndTrader();
+                if (TraderDatabase.getInstance().traderExists(endTrader.getUUID())) {
+                    addNewMission(endTrader, Instant.now());
+                }
+            } else {
+                TradeRoutes.getInstance().getLogger().severe("Mission spec is null, so it could not be replaced!");
             }
             updateSerializedMissionData();
         } catch (SQLException e) {
             TradeRoutes.getInstance().getLogger().severe("Failed to replace mission: " + e.getMessage());
+        }
+    }
+
+    public void replaceMission(TradeMissionSpec oldMission, boolean deleteFromDatabase) {
+        replaceMission(oldMission.getId(), deleteFromDatabase);
+    }
+
+    /**
+     * Removes a single mission without replacing it.
+     *
+     * @param missionId The ID of the mission to be removed.
+     * @param deleteFromDatabase Whether to delete the mission from the database.
+     */
+    public void removeMission(int missionId, boolean deleteFromDatabase) {
+        // Find the mission that contains the mission spec to remove
+        TraderMission missionToDelete = getCurrentMissions().stream()
+            .filter(mission -> mission.getMissionSpecId() == missionId)
+            .findFirst()
+            .orElse(null);
+
+        if (missionToDelete == null)
+            return;
+        getCurrentMissions().remove(missionToDelete);
+
+        try {
+            TradeMissionSpec missionSpec = missionToDelete.getMissionSpec();
+            if (missionSpec != null && deleteFromDatabase)
+                TraderDatabase.getInstance().removeTradeMissionSpec(missionSpec);
+
+            updateSerializedMissionData();
+        } catch (SQLException e) {
+            TradeRoutes.getInstance().getLogger().severe("Failed to remove mission: " + e.getMessage());
         }
     }
 
@@ -256,24 +303,7 @@ public class Trader {
      * @param deleteFromDatabase Whether to delete the mission from the database.
      */
     public void removeMission(TradeMissionSpec missionToRemove, boolean deleteFromDatabase) {
-        // Find the mission that contains the mission spec to remove
-        TraderMission missionToDelete = currentMissions.stream()
-            .filter(mission -> mission.getMissionSpec().equals(missionToRemove))
-            .findFirst()
-            .orElse(null);
-
-        if (missionToDelete == null)
-            return;
-        currentMissions.remove(missionToDelete);
-
-        try {
-            if (deleteFromDatabase)
-                TraderDatabase.getInstance().removeTradeMissionSpec(missionToRemove);
-
-            updateSerializedMissionData();
-        } catch (SQLException e) {
-            TradeRoutes.getInstance().getLogger().severe("Failed to remove mission: " + e.getMessage());
-        }
+        removeMission(missionToRemove.getId(), deleteFromDatabase);
     }
 
     /**
@@ -290,12 +320,15 @@ public class Trader {
             throw new RuntimeException(e);
         }
         Instant expirationTime = baseTime.plus(missionDuration);
+
+        List<TraderMission> currentMissions = getCurrentMissions();
+
         currentMissions.add(new TraderMission(newMissionSpec, baseTime, expirationTime));
 
         // Ensure we don't exceed maxMissions
         if (currentMissions.size() > maxMissions) {
             currentMissions.sort(Comparator.comparing(TraderMission::getStartTime));
-            currentMissions = currentMissions.subList(0, maxMissions);
+            this.currentMissions = currentMissions.subList(0, maxMissions);
         }
     }
 
@@ -303,7 +336,7 @@ public class Trader {
      * Updates the serialized mission data in the database.
      */
     private void updateSerializedMissionData() {
-        serializedMissionData = gson.toJson(currentMissions);
+        serializedMissionData = gson.toJson(getCurrentMissions());
         try {
             TraderDatabase.getInstance().updateTrader(this);
         } catch (SQLException e) {
@@ -345,6 +378,12 @@ public class Trader {
         this.maxMissions = maxMissions;
     }
 
+    private List<TraderMission> getCurrentMissions() {
+        if (currentMissions == null)
+            initializeMissions();
+        return currentMissions;
+    }
+
 
     private static class TraderMission {
         private final int missionSpecId;
@@ -359,12 +398,14 @@ public class Trader {
             this.expirationTime = expirationTime;
         }
 
+        public int getMissionSpecId() {
+            return missionSpecId;
+        }
+
         public TradeMissionSpec getMissionSpec() {
             if (missionSpec == null) {
                 try {
-                    // TODO: Figure out a more graceful way to handle this
-                    //       Maybe just gen a new mission spec?
-                    missionSpec = TraderDatabase.getInstance().getTradeMissionSpecById(missionSpecId).orElseThrow();
+                    missionSpec = TraderDatabase.getInstance().getTradeMissionSpecById(missionSpecId).orElse(null);
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }

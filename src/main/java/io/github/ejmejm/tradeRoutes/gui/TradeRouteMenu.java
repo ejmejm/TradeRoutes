@@ -59,16 +59,16 @@ public class TradeRouteMenu extends Menu {
                     // Add requested items
                     lore.add(Component.text("Requested Items:", NamedTextColor.GOLD, TextDecoration.UNDERLINED));
                     for (ItemStack requestedItem : mission.getRequiredItems()) {
-                        lore.add(Component.text("- " + requestedItem.getType(), NamedTextColor.BLUE)
-                                .append(Component.text(" (" + requestedItem.getAmount() + ")", NamedTextColor.AQUA)));
+                        lore.add(Component.text("- " + requestedItem.getType(), NamedTextColor.BLUE));
+                        lore.add(Component.text(" (" + requestedItem.getAmount() + ")", NamedTextColor.AQUA));
                     }
 
                     // Add rewards
                     lore.add(Component.text(""));
                     lore.add(Component.text("Rewards:", NamedTextColor.GOLD, TextDecoration.UNDERLINED));
                     for (ItemStack requestedItem : mission.getRewards()) {
-                        lore.add(Component.text("- " + requestedItem.getType(), NamedTextColor.BLUE)
-                                .append(Component.text(" (" + requestedItem.getAmount() + ")", NamedTextColor.AQUA)));
+                        lore.add(Component.text("- " + requestedItem.getType(), NamedTextColor.BLUE));
+                        lore.add(Component.text(" (" + requestedItem.getAmount() + ")", NamedTextColor.AQUA));
                     }
                     // Mark as taken if taken
                     if (mission.getTaken()) {
@@ -79,7 +79,7 @@ public class TradeRouteMenu extends Menu {
                                 .collect(Collectors.toList());
 
                         lore.add(Component.text(""));
-                        lore.add(Component.text("IN PROGRESS", NamedTextColor.RED, TextDecoration.BOLD));
+                        lore.add(Component.text("TAKEN", NamedTextColor.RED, TextDecoration.BOLD));
                     }
 
                     meta.lore(lore);
@@ -173,7 +173,6 @@ public class TradeRouteMenu extends Menu {
                         "Failed to initiate trade mission. Report this bug to an admin.", NamedTextColor.RED));
                 return;
             }
-           missionSpec.setTaken(true);
 
            String affiliation = missionSpec.getEndTrader().getAffiliation();
            org.bukkit.Location location = missionSpec.getEndTrader().getLocation();

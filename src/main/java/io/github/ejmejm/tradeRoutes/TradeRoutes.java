@@ -31,6 +31,7 @@ public final class TradeRoutes extends JavaPlugin {
         } catch (SQLException | IllegalStateException e) {
             getLogger().severe("Failed to connect to database: " + e);
             getServer().getPluginManager().disablePlugin(this);
+            e.printStackTrace();
         }
     }
 

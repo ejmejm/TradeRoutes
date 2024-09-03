@@ -41,15 +41,14 @@ public class TraderDatabase {
 
         TraderDatabase.plugin = plugin;
         npcManager = FancyNpcsPlugin.get().getNpcManager();
-
-        if (!syncDatabase()) {
-            throw new SQLException("Failed to sync database with NPC registry.");
-        }
     }
 
     public static void initialize(String path, Plugin plugin) throws SQLException {
         if (INSTANCE == null) {
             INSTANCE = new TraderDatabase(path, plugin);
+            if (!INSTANCE.syncDatabase()) {
+                throw new SQLException("Failed to sync database with NPC registry.");
+            }
         } else {
             throw new IllegalStateException("TraderDatabase has already been initialized.");
         }
@@ -63,6 +62,13 @@ public class TraderDatabase {
     }
 
     private boolean syncDatabase() {
+        boolean success = true;
+        success &= syncTraderNpcs();
+        success &= syncTradeMissionSpecs();
+        return success;
+    }
+    
+    private boolean syncTraderNpcs() {
         Map<String, Npc> npcMap = npcManager.getAllNpcs().stream()
                 .filter(npc -> npc.getData().getName().startsWith(Trader.TRADER_NAME_PREFIX))
                 .collect(Collectors.toMap(npc -> npc.getData().getId(), npc -> npc));
@@ -99,6 +105,18 @@ public class TraderDatabase {
 
         return true;
     }
+
+    /*
+     * Loops through all traders and initializes their missions
+     * Then checks if any missions specs are missing from the database
+     * and replaces them with new missions if they are.
+     */
+    private boolean syncTradeMissionSpecs() {
+        for (Trader trader : getTraders().values())
+            trader.initializeMissions();
+        return true;
+    }
+
     public void closeConnection() throws Exception {
         if (connectionSource != null && (connectionSource.isOpen("traders")
                         || connectionSource.isOpen("active_trade_missions")
@@ -159,6 +177,10 @@ public class TraderDatabase {
             TradeRoutes.getInstance().getLogger().severe("Could not get list of traders from database: " + e);
         }
         return traders.stream().collect(Collectors.toMap(Trader::getUUID, trader -> trader));
+    }
+
+    public Optional<Trader> getTraderById(String uuid) throws SQLException {
+        return Optional.ofNullable(traderDao.queryForId(uuid));
     }
 
     /*************************
