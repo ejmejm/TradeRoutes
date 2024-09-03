@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 
 public class ConfirmCommand extends SubCommand {
     private static final String PERMISSION = "traderoutes.command.confirm";
@@ -33,6 +34,11 @@ public class ConfirmCommand extends SubCommand {
     @Override
     public String getSyntax() {
         return "/tr confirm";
+    }
+
+    @Override
+    public List<String> getPermissions() {
+        return List.of(PERMISSION);
     }
 
     @RequireOneOfPermissions({PERMISSION})

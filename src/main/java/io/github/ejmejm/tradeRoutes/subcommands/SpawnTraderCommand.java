@@ -16,6 +16,7 @@ import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
 import java.sql.SQLException;
+import java.util.List;
 import java.util.UUID;
 
 public class SpawnTraderCommand extends SubCommand {
@@ -36,6 +37,11 @@ public class SpawnTraderCommand extends SubCommand {
     @Override
     public String getSyntax() {
         return "/tr spawntrader (affiliation)";
+    }
+
+    @Override
+    public List<String> getPermissions() {
+        return List.of(BASE_PERMISSION, ANY_AFFILIATION_PERMISSION);
     }
 
     private UUID genBlankUUID() {

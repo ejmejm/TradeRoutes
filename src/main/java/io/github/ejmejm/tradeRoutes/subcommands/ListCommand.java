@@ -10,6 +10,7 @@ import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 
+import java.util.List;
 import java.util.Map;
 
 public class ListCommand extends SubCommand {
@@ -43,7 +44,12 @@ public class ListCommand extends SubCommand {
 
     @Override
     public String getSyntax() {
-        return "/tr list < traders | caravans>";
+        return "/tr list <traders|caravans>";
+    }
+
+    @Override
+    public List<String> getPermissions() {
+        return List.of(PERMISSION);
     }
 
     private void listTraders(CommandSender sender) {

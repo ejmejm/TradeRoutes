@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Method;
+import java.util.List;
 
 public abstract class SubCommand {
 
@@ -38,6 +39,8 @@ public abstract class SubCommand {
     public abstract String getDescription();
 
     public abstract String getSyntax();
+
+    public abstract List<String> getPermissions();
 
     protected abstract void perform(CommandSender sender, String[] args);
 

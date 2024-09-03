@@ -13,6 +13,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.persistence.PersistentDataContainer;
 
 import java.sql.SQLException;
+import java.util.List;
 import java.util.Optional;
 
 public class CancelMissionCommand extends SubCommand {
@@ -31,6 +32,11 @@ public class CancelMissionCommand extends SubCommand {
     @Override
     public String getSyntax() {
         return "/tr cancelmission";
+    }
+
+    @Override
+    public List<String> getPermissions() {
+        return List.of(PERMISSION);
     }
 
     @RequireOneOfPermissions({PERMISSION})
