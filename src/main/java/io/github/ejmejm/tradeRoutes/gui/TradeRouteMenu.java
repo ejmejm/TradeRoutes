@@ -53,7 +53,7 @@ public class TradeRouteMenu extends Menu {
                     List<Component> lore = new ArrayList<>();
                     lore.add(Component.text("Coords: " + coordinates, NamedTextColor.GRAY));
                     lore.add(Component.text("Distance: " + distance, NamedTextColor.DARK_GREEN));
-                    lore.add(Component.newline());
+                    lore.add(Component.text(""));
 
                     // Add requested items
                     lore.add(Component.text("Requested Items:", NamedTextColor.GOLD, TextDecoration.UNDERLINED));
@@ -63,7 +63,7 @@ public class TradeRouteMenu extends Menu {
                     }
 
                     // Add rewards
-                    lore.add(Component.newline());
+                    lore.add(Component.text(""));
                     lore.add(Component.text("Rewards:", NamedTextColor.GOLD, TextDecoration.UNDERLINED));
                     for (ItemStack requestedItem : mission.getRewards()) {
                         lore.add(Component.text("- " + requestedItem.getType(), NamedTextColor.BLUE)

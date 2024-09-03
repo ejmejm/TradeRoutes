@@ -120,6 +120,7 @@ public class TraderDatabase {
         traderDao.deleteById(traderUUID);
     }
 
+    // TODO: When a trader is removed, make sure to remove all mission specs and active missions associated with them
     public void removeTrader(Trader trader) throws SQLException {
         traderDao.delete(trader);
     }

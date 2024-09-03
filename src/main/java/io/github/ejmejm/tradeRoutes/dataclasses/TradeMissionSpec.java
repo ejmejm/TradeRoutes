@@ -112,6 +112,10 @@ public class TradeMissionSpec {
         return generatedItems;
     }
 
+    public int getId() {
+        return id;
+    }
+
     // Update getters and setters to use the serialized fields
     public List<ItemStack> getRequiredItems() {
         if (requiredItems == null) {
