@@ -16,6 +16,7 @@ import java.sql.SQLException;
 import java.util.Optional;
 
 public class CancelMissionCommand extends SubCommand {
+    private static final String PERMISSION = "traderoutes.command.mission.cancel";
 
     @Override
     public String getName() {
@@ -32,6 +33,7 @@ public class CancelMissionCommand extends SubCommand {
         return "/tr cancelmission";
     }
 
+    @RequireOneOfPermissions({PERMISSION})
     @ExpectPlayer
     @ExpectNArgs(1)
     @Override

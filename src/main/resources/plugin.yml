@@ -13,12 +13,68 @@ commands:
     permission: traderoutes.command
 
 permissions:
+
+
+  ### Base plugin command ###
+
   traderoutes.command:
     description: "Ability to use the tr command for help"
     default: true
+
+
+  ### Commands for broad player groups ###
+
+  traderoutes.command.players:
+    description: "Commands that all standard players should have access to"
+    default: op
+    children:
+      traderoutes.command: true
+      traderoutes.command.list.*: true
+      traderoutes.command.mission.cancel: true
+      traderoutes.command.confirm: true
+  traderoutes.command.mayor:
+    description: "Commands that all town mayors should have access to"
+    default: op
+    children:
+      traderoutes.command.players: true
+      traderoutes.command.spawn.trader.town: true
+  traderoutes.command.admin:
+    description: "Ability to use all list commands"
+    default: op
+    children:
+      traderoutes.command.mayor: true
+      traderoutes.command.spawn.trader.any: true
+
+
+  ### All wild card commands ###
+
+  traderoutes.command.list.*:
+    description: "Ability to use all list commands"
+    default: op
+    children:
+      traderoutes.command.list.traders: true
+      traderoutes.command.list.missions: true
+
+
+  ### All single commands ###
+
+  traderoutes.command.list.traders:
+    description: "Ability to list all traders in the world"
+    default: op
+  traderoutes.command.list.missions:
+    description: "Ability to list all active missions in the world"
+    default: op
+
   traderoutes.command.spawn.trader.town:
     description: "Ability to spawn a trade route NPC for their town in their land"
     default: op
   traderoutes.command.spawn.trader.any:
     description: "Ability to spawn a trader with an arbitrary affiliation"
+    default: op
+
+  traderoutes.command.mission.cancel:
+    description: "Ability to cancel your own active mission"
+    default: op
+  traderoutes.command.confirm:
+    description: "Ability to confirm one of multiple possible actions"
     default: op

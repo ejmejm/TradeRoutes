@@ -13,6 +13,8 @@ import org.bukkit.command.CommandSender;
 import java.util.Map;
 
 public class ListCommand extends SubCommand {
+    private static final String PERMISSION = "traderoutes.command.list.traders";
+
     private static final TextColor[] affiliationColors = {
             NamedTextColor.GOLD,
             NamedTextColor.LIGHT_PURPLE,
@@ -92,6 +94,7 @@ public class ListCommand extends SubCommand {
         sender.sendMessage(CMD_ERROR_COLOR + "This command is not implemented yet.");
     }
 
+    @RequireOneOfPermissions({PERMISSION})
     @ExpectNArgs(2)
     @Override
     protected void perform(CommandSender sender, String[] args) {

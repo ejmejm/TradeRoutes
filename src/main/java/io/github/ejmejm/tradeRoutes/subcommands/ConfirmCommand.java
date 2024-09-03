@@ -11,6 +11,7 @@ import java.time.Duration;
 import java.time.Instant;
 
 public class ConfirmCommand extends SubCommand {
+    private static final String PERMISSION = "traderoutes.command.confirm";
 
     private static final int CONFIRMATION_TIMEOUT = 8; // 120; // seconds
 
@@ -34,6 +35,7 @@ public class ConfirmCommand extends SubCommand {
         return "/tr confirm";
     }
 
+    @RequireOneOfPermissions({PERMISSION})
     @ExpectPlayer
     @ExpectNArgs(1)
     @Override
