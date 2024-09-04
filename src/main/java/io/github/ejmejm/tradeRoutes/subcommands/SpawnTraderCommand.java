@@ -3,7 +3,6 @@ package io.github.ejmejm.tradeRoutes.subcommands;
 import com.palmergames.bukkit.towny.TownyAPI;
 import com.palmergames.bukkit.towny.object.Town;
 import io.github.ejmejm.tradeRoutes.PluginChecker;
-import io.github.ejmejm.tradeRoutes.SubCommand;
 import io.github.ejmejm.tradeRoutes.TraderDatabase;
 import io.github.ejmejm.tradeRoutes.dataclasses.Trader;
 import net.kyori.adventure.text.Component;
@@ -21,8 +20,8 @@ import java.util.UUID;
 
 public class SpawnTraderCommand extends SubCommand {
     private static final double maxSpawnDistance = 128;
-    private static final String BASE_PERMISSION = "traderoutes.command.spawn.trader.town";
-    private static final String ANY_AFFILIATION_PERMISSION = "traderoutes.command.spawn.trader.any";
+    private static final String BASE_PERMISSION = "traderoutes.command.trader.spawn.town";
+    private static final String ANY_AFFILIATION_PERMISSION = "traderoutes.command.trader.spawn.any";
 
     @Override
     public String getName() {

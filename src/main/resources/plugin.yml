@@ -32,18 +32,21 @@ permissions:
       traderoutes.command.list.*: true
       traderoutes.command.mission.cancel: true
       traderoutes.command.confirm: true
+
   traderoutes.command.mayor:
     description: "Commands that all town mayors should have access to"
     default: op
     children:
       traderoutes.command.players: true
-      traderoutes.command.spawn.trader.town: true
+      traderoutes.command.trader.spawn.town: true
+      traderoutes.command.trader.remove.town: true
+
   traderoutes.command.admin:
     description: "Ability to use all list commands"
     default: op
     children:
       traderoutes.command.mayor: true
-      traderoutes.command.spawn.trader.any: true
+      traderoutes.command.trader.*: true
 
 
   ### All wild card commands ###
@@ -55,6 +58,15 @@ permissions:
       traderoutes.command.list.traders: true
       traderoutes.command.list.missions: true
 
+  traderoutes.command.trader.*:
+    description: "Commands related to traders"
+    default: op
+    children:
+      traderoutes.command.trader.spawn.town: true
+      traderoutes.command.trader.spawn.any: true
+      traderoutes.command.trader.remove.town: true
+      traderoutes.command.trader.remove.any: true
+
 
   ### All single commands ###
 
@@ -65,11 +77,17 @@ permissions:
     description: "Ability to list all active missions in the world"
     default: op
 
-  traderoutes.command.spawn.trader.town:
+  traderoutes.command.trader.spawn.town:
     description: "Ability to spawn a trade route NPC for their town in their land"
     default: op
-  traderoutes.command.spawn.trader.any:
+  traderoutes.command.trader.spawn.any:
     description: "Ability to spawn a trader with an arbitrary affiliation"
+    default: op
+  traderoutes.command.trader.remove.town:
+    description: "Ability to remove a trader from their town"
+    default: op
+  traderoutes.command.trader.remove.any:
+    description: "Ability to remove a trader with an arbitrary affiliation"
     default: op
 
   traderoutes.command.mission.cancel:

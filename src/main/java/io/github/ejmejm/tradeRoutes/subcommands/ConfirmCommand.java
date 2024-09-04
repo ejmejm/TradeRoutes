@@ -1,7 +1,6 @@
 package io.github.ejmejm.tradeRoutes.subcommands;
 
 import io.github.ejmejm.tradeRoutes.CommandManager;
-import io.github.ejmejm.tradeRoutes.SubCommand;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.CommandSender;

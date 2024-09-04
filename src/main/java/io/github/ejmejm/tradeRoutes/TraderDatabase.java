@@ -4,6 +4,7 @@ import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.dao.DaoManager;
 import com.j256.ormlite.jdbc.JdbcConnectionSource;
 import com.j256.ormlite.support.ConnectionSource;
+import com.j256.ormlite.support.DatabaseConnection;
 import com.j256.ormlite.table.TableUtils;
 import de.oliver.fancynpcs.api.FancyNpcsPlugin;
 import de.oliver.fancynpcs.api.Npc;
@@ -15,6 +16,7 @@ import org.bukkit.plugin.Plugin;
 
 import java.sql.SQLException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -26,6 +28,8 @@ public class TraderDatabase {
     private static Dao<TradeMissionSpec, Integer> tradeMissionSpecDao;
     private static NpcManager npcManager;
     private static Plugin plugin;
+    private final ThreadLocal<DatabaseConnection> threadConnection = new ThreadLocal<>();
+    private final ConcurrentHashMap<Thread, DatabaseConnection> activeConnections = new ConcurrentHashMap<>();
 
     private TraderDatabase(String path, Plugin plugin) throws SQLException {
         // Connect to the database
@@ -117,11 +121,60 @@ public class TraderDatabase {
         return true;
     }
 
+    public void beginTransaction() throws SQLException {
+        DatabaseConnection connection = threadConnection.get();
+        if (connection == null || connection.isClosed()) {
+            connection = connectionSource.getReadWriteConnection("traders");
+            threadConnection.set(connection);
+            activeConnections.put(Thread.currentThread(), connection);
+        }
+        connection.setAutoCommit(false);
+    }
+
+    public void commitTransaction() throws SQLException {
+        DatabaseConnection connection = threadConnection.get();
+        if (connection != null && !connection.isAutoCommit()) {
+            connection.commit(null);
+            connection.setAutoCommit(true);
+            releaseConnection();
+        }
+    }
+
+    public void rollbackTransaction() throws SQLException {
+        DatabaseConnection connection = threadConnection.get();
+        if (connection != null && !connection.isAutoCommit()) {
+            connection.rollback(null);
+            connection.setAutoCommit(true);
+            releaseConnection();
+        }
+    }
+
+    private void releaseConnection() throws SQLException {
+        DatabaseConnection connection = threadConnection.get();
+        if (connection != null) {
+            connectionSource.releaseConnection(connection);
+            threadConnection.remove();
+            activeConnections.remove(Thread.currentThread());
+        }
+    }
+
     public void closeConnection() throws Exception {
+        for (DatabaseConnection conn : activeConnections.values()) {
+            if (conn != null && !conn.isClosed()) {
+                if (!conn.isAutoCommit()) {
+                    conn.rollback(null);
+                    conn.setAutoCommit(true);
+                }
+                connectionSource.releaseConnection(conn);
+            }
+        }
+        activeConnections.clear();
+        threadConnection.remove();
+
         if (connectionSource != null && (connectionSource.isOpen("traders")
-                        || connectionSource.isOpen("active_trade_missions")
-                        || connectionSource.isOpen("trade_mission_specs")
-            )) {
+                || connectionSource.isOpen("active_trade_missions")
+                || connectionSource.isOpen("trade_mission_specs")
+        )) {
             connectionSource.close();
         }
     }

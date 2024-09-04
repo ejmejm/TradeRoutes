@@ -1,6 +1,5 @@
 package io.github.ejmejm.tradeRoutes.subcommands;
 
-import io.github.ejmejm.tradeRoutes.SubCommand;
 import io.github.ejmejm.tradeRoutes.TraderDatabase;
 import io.github.ejmejm.tradeRoutes.dataclasses.Trader;
 import net.kyori.adventure.text.Component;

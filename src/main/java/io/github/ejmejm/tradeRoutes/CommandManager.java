@@ -1,9 +1,6 @@
 package io.github.ejmejm.tradeRoutes;
 
-import io.github.ejmejm.tradeRoutes.subcommands.CancelMissionCommand;
-import io.github.ejmejm.tradeRoutes.subcommands.ConfirmCommand;
-import io.github.ejmejm.tradeRoutes.subcommands.ListCommand;
-import io.github.ejmejm.tradeRoutes.subcommands.SpawnTraderCommand;
+import io.github.ejmejm.tradeRoutes.subcommands.*;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.Command;
@@ -36,7 +33,8 @@ public class CommandManager implements CommandExecutor, TabExecutor {
                 new ListCommand(),
                 new SpawnTraderCommand(),
                 new CancelMissionCommand(),
-                new ConfirmCommand()
+                new ConfirmCommand(),
+                new RemoveTraderCommand()
         );
 
         subcommands = commandList.stream()
