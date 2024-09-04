@@ -3,10 +3,12 @@ package io.github.ejmejm.tradeRoutes;
 import de.oliver.fancynpcs.api.FancyNpcsPlugin;
 import io.github.ejmejm.tradeRoutes.events.CaravanDeathListener;
 import io.github.ejmejm.tradeRoutes.events.MenuListener;
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -67,9 +69,14 @@ public final class TradeRoutes extends JavaPlugin {
         // Register which soft dependencies are enabled
         PluginChecker.initialize(SOFT_DEPENDENCIES);
 
-        // Register event listeners
-        getServer().getPluginManager().registerEvents(new MenuListener(), this);
-        getServer().getPluginManager().registerEvents(new CaravanDeathListener(), this);
+        // Load configs
+        try {
+            ItemValues.initialize();
+        } catch (IOException | InvalidConfigurationException e) {
+            getLogger().severe("Failed to initialize item values: " + e);
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
     
         // Prepare NPCs
         Plugin fancyNpcs = getServer().getPluginManager().getPlugin("FancyNpcs");
@@ -79,6 +86,10 @@ public final class TradeRoutes extends JavaPlugin {
             return;
         }
         scheduleDatabaseInitTask();
+
+        // Register event listeners
+        getServer().getPluginManager().registerEvents(new MenuListener(), this);
+        getServer().getPluginManager().registerEvents(new CaravanDeathListener(), this);
 
         getCommand("traderoutes").setExecutor(new CommandManager());
     }
