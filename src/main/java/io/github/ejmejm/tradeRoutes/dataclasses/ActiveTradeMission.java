@@ -18,6 +18,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 
 import java.sql.SQLException;
 import java.util.*;
@@ -79,6 +81,10 @@ public class ActiveTradeMission {
         Objects.requireNonNull(camel.getAttribute(Attribute.GENERIC_MAX_HEALTH)).setBaseValue(CAMEL_HEALTH);
         camel.setHealth(CAMEL_HEALTH);
         camel.setRemoveWhenFarAway(false);
+        PotionEffect glowEffect = new PotionEffect(
+            PotionEffectType.GLOWING, PotionEffect.INFINITE_DURATION,
+                0, false, false, false);
+        camel.addPotionEffect(glowEffect);
         camel.setLeashHolder(player);
 
         // Store required items in persistent data container
@@ -120,7 +126,8 @@ public class ActiveTradeMission {
             replaceOriginalMission();
             db.removeActiveTradeMission(this);
         } catch (SQLException e) {
-            TradeRoutes.getInstance().getLogger().severe("Failed to remove completed mission from database: " + e.getMessage());
+            TradeRoutes.getInstance().getLogger().severe(
+                    "Failed to remove completed mission from database: " + e.getMessage());
             return false;
         }
 
@@ -141,7 +148,8 @@ public class ActiveTradeMission {
             }
 
             // Send success message
-            player.sendMessage(Component.text("Trade mission completed successfully! You've received your rewards.", NamedTextColor.GREEN));
+            player.sendMessage(Component.text(
+                    "Trade mission completed successfully! You've received your rewards.", NamedTextColor.GREEN));
         }
 
         return true;
@@ -155,7 +163,8 @@ public class ActiveTradeMission {
                 db.removeTradeMissionSpec(missionSpec);
             db.removeActiveTradeMission(this);
         } catch (SQLException e) {
-            TradeRoutes.getInstance().getLogger().severe("Failed to remove failed mission from database: " + e.getMessage());
+            TradeRoutes.getInstance().getLogger().severe(
+                    "Failed to remove failed mission from database: " + e.getMessage());
             return;
         }
 
@@ -185,17 +194,20 @@ public class ActiveTradeMission {
 
         if (playerClose && camelClose) {
             if (!completeMission()) {
-                player.sendMessage(Component.text("There was an error completing the mission. Please contact an admin.", NamedTextColor.RED));
+                player.sendMessage(Component.text(
+                        "There was an error completing the mission. Please contact an admin.", NamedTextColor.RED));
             }
         } else {
             Component message = Component.text("Cannot complete the mission: ", NamedTextColor.RED);
             List<Component> problems = new ArrayList<>();
             
             if (!playerClose) {
-                problems.add(Component.text("- You need to be within 30 blocks of the destination trader.", NamedTextColor.RED));
+                problems.add(Component.text(
+                        "- You need to be within 30 blocks of the destination trader.", NamedTextColor.RED));
             }
             if (!camelClose) {
-                problems.add(Component.text("- Your caravan needs to be within 30 blocks of the destination trader.", NamedTextColor.RED));
+                problems.add(Component.text(
+                        "- Your caravan needs to be within 30 blocks of the destination trader.", NamedTextColor.RED));
             }
             
             for (Component problem : problems) {
