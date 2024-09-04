@@ -265,8 +265,14 @@ public class TraderDatabase {
                 .queryForFirst());
     }
 
-    public List<ActiveTradeMission> getAllActiveTradeMissions() throws SQLException {
-        return activeTradeMissionDao.queryForAll();
+    public List<ActiveTradeMission> getAllActiveTradeMissions() {
+        try {
+            return activeTradeMissionDao.queryForAll();
+        } catch (SQLException e) {
+            TradeRoutes.getInstance().getLogger().severe(
+                    "Could not get list of active trade missions from database: " + e);
+        }
+        return List.of();
     }
 
     /*************************

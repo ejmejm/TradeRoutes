@@ -38,6 +38,9 @@ public class ActiveTradeMission {
     private UUID playerUUID;
 
     @DatabaseField
+    private String playerName;
+
+    @DatabaseField
     private UUID caravanUUID;
 
     @DatabaseField
@@ -49,12 +52,19 @@ public class ActiveTradeMission {
     // No-args constructor required by ORMLite
     public ActiveTradeMission() {}
 
-    public ActiveTradeMission(TradeMissionSpec missionSpec, UUID playerUUID, UUID caravanUUID, Date startTime, Date expiryTime) {
+    public ActiveTradeMission(
+            TradeMissionSpec missionSpec,
+            UUID playerUUID,
+            UUID caravanUUID,
+            Date startTime,
+            Date expiryTime) {
         this.missionSpec = missionSpec;
         this.playerUUID = playerUUID;
         this.caravanUUID = caravanUUID;
         this.startTime = startTime;
         this.expiryTime = expiryTime;
+        Player player = Bukkit.getPlayer(playerUUID);
+        this.playerName = player == null ? null : player.getName();
     }
 
     public static ActiveTradeMission initiateMission(Player player, TradeMissionSpec missionSpec) {
@@ -227,6 +237,14 @@ public class ActiveTradeMission {
 
     public void setPlayerUUID(UUID playerUUID) {
         this.playerUUID = playerUUID;
+    }
+
+    public String getPlayerName() {
+        return playerName;
+    }
+
+    public void setPlayerName(String playerName) {
+        this.playerName = playerName;
     }
 
     public Date getStartTime() {

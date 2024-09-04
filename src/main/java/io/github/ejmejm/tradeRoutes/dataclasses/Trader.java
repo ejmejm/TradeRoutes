@@ -161,7 +161,8 @@ public class Trader {
      */
     public List<TradeMissionSpec> getTradeMissions() {
         List<TraderMission> currentMissions = getCurrentMissions();
-        
+
+        removeInvalidMissions();
         replaceExpiredMissions();
 
         return currentMissions.stream()
@@ -180,7 +181,7 @@ public class Trader {
             currentMissions = deserializeMissionData();
             for (TraderMission mission : currentMissions) {
                 if (mission.getMissionSpec() == null) {
-                    TradeRoutes.getInstance().getLogger().severe(
+                    TradeRoutes.getInstance().getLogger().warning(
                             "Mission spec is null for mission " + mission.getMissionSpecId());
                     replaceMission(mission.getMissionSpecId(), true);
                 }
@@ -214,9 +215,11 @@ public class Trader {
                 getCurrentMissions().remove(expiredMission);
                 TraderDatabase.getInstance().removeTradeMissionSpec(expiredMission.getMissionSpec());
                 missionsUpdated = true;
-
                 if (TraderDatabase.getInstance().traderExists(endTrader.getUUID())) {
-                    addNewMission(endTrader, expiredMission.getExpirationTime());
+                    Duration timeSinceExpiration = Duration.between(expiredMission.getExpirationTime(), now);
+                    Duration offset = missionDuration.multipliedBy(timeSinceExpiration.dividedBy(missionDuration));
+                    Instant newStartTime = expiredMission.getExpirationTime().plus(offset);
+                    addNewMission(endTrader, newStartTime);
                 }
             } catch (SQLException e) {
                 throw new RuntimeException(e);
@@ -225,6 +228,26 @@ public class Trader {
 
         if (missionsUpdated)
             updateSerializedMissionData();
+    }
+
+    /**
+     * Removes missions with invalid start or end traders.
+     */
+    private void removeInvalidMissions() {
+        List<TraderMission> invalidMissions = getCurrentMissions().stream()
+            .filter(mission -> {
+                TradeMissionSpec spec = mission.getMissionSpec();
+                return spec == null || spec.getStartTrader() == null || spec.getEndTrader() == null;
+            })
+            .toList();
+
+        if (!invalidMissions.isEmpty()) {
+            for (TraderMission invalidMission : invalidMissions) {
+                removeMission(invalidMission.getMissionSpecId(), true);
+            }
+            updateSerializedMissionData();
+            TradeRoutes.getInstance().getLogger().info("Removed " + invalidMissions.size() + " invalid missions for trader " + getUUID());
+        }
     }
     
     /**
@@ -256,7 +279,7 @@ public class Trader {
                     addNewMission(endTrader, Instant.now());
                 }
             } else {
-                TradeRoutes.getInstance().getLogger().severe("Mission spec is null, so it could not be replaced!");
+                TradeRoutes.getInstance().getLogger().warning("Mission spec is null, so it could not be replaced!");
             }
             updateSerializedMissionData();
         } catch (SQLException e) {
