@@ -27,6 +27,7 @@ import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @DatabaseTable(tableName = "traders")
 public class Trader {
@@ -364,6 +365,56 @@ public class Trader {
         }
     }
 
+    private boolean isMissionSpecValid(TradeMissionSpec missionSpec) {
+        // Check if mission meets config requirements (min distance and max distance)
+        float minDistance = TradeConfig.getFloat("min_route_distance", this.level);
+        float maxDistance = TradeConfig.getFloat("max_route_distance", this.level);
+        double routeDistance = missionSpec.getRouteDistance();
+        return routeDistance >= minDistance && routeDistance <= maxDistance;
+    }
+
+    public void fixMissions() {
+        // Remove missions that no longer meet config requirements (min distance, max distance, and max missions)
+        List<TraderMission> missionsCopy = new ArrayList<>(getCurrentMissions().values());
+    
+        for (TraderMission mission : missionsCopy) {
+            if (!isMissionSpecValid(mission.getMissionSpec())) {
+                replaceMission(mission.getMissionSpecId(), !mission.getMissionSpec().getTaken());
+            }
+        }
+
+        // Check through all other traders up to make sure they have missions to all other traders up to
+        // trader_max_missions
+        Map<String, Trader> allTraders = TraderDatabase.getInstance().getTraders();
+        allTraders.remove(this.getUUID());
+
+        // Create a HashSet of traders we already have trade missions to
+        Set<String> existingMissionTraders = getCurrentMissions().values().stream()
+            .map(mission -> mission.getMissionSpec().getEndTrader().getUUID())
+            .collect(Collectors.toSet());
+
+        // Filter out traders that we already have trade missions to
+        allTraders = allTraders.entrySet().stream()
+            .filter(entry -> !existingMissionTraders.contains(entry.getKey()))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+
+        float minDistance = TradeConfig.getFloat("min_route_distance", this.level);
+        float maxDistance = TradeConfig.getFloat("max_route_distance", this.level);
+
+        for (Trader endTrader : allTraders.values()) {
+            if (getCurrentMissions().size() >= getMaxMissions()) {
+                break;
+            }
+            double distance = this.getLocation().distance(endTrader.getLocation());
+            if (distance >= minDistance && distance <= maxDistance) {
+                addNewMission(endTrader, Instant.now());
+            }
+        }
+
+        updateSerializedMissionData();
+    }
+
     /**
      * Updates the serialized mission data in the database.
      */
@@ -391,7 +442,7 @@ public class Trader {
 
     public String getName() {
         return getNpc().getData().getName();
-    }
+    }// Remove missions that no longer meet config requirements (min distance, max distance, and max missions)
 
     public Location getLocation() {
         return getNpc().getData().getLocation();

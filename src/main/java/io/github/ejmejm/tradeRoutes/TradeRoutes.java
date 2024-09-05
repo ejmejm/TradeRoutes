@@ -59,7 +59,11 @@ public final class TradeRoutes extends JavaPlugin {
                 if ((currentNpcCount > 0 && unchangedTickCount >= 2) || unchangedTickCount >= 60) {
                     getServer().getScheduler().cancelTask(initDbTask.getTaskId());
                     initializeDatabase();
+
+                    // Register a task to frequently check to make sure all missions are okay
+                    MissionManager.registerMissionCheckTask(getInstance());
                 }
+
             }
         }, 20L * 5, 10L); // Run every 10 ticks (0.5 seconds)
     }
@@ -92,6 +96,7 @@ public final class TradeRoutes extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new MenuListener(), this);
         getServer().getPluginManager().registerEvents(new CaravanDeathListener(), this);
 
+        // Register commands
         getCommand("traderoutes").setExecutor(new CommandManager());
     }
 
