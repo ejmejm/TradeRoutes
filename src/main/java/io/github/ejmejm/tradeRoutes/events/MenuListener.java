@@ -23,17 +23,10 @@ public class MenuListener implements Listener {
         final Player player = (Player) event.getWhoClicked();
         final int slot = event.getSlot();
 
-        System.out.println("Clicking in menu! Has metadata ? " + player.hasMetadata(IN_MENU_METADATA));
-
         if (player.hasMetadata(IN_MENU_METADATA)) {
             final Menu menu = (Menu) player.getMetadata(IN_MENU_METADATA).getFirst().value();
-
-            System.out.println("Clicked " + slot + " in menu " + menu);
-
             for (final Button button : menu.getButtons())
                 if (button.getSlot() == slot) {
-                    System.out.println("Found clickable slot " + button.getSlot() + " with item " + button.getItem());
-
                     button.onClick(player);
                     event.setCancelled(true);
                 }
@@ -44,7 +37,6 @@ public class MenuListener implements Listener {
     public void onInventoryClose(InventoryCloseEvent event) {
         final Player player = (Player) event.getPlayer();
         if (player.hasMetadata(IN_MENU_METADATA)) {
-            System.out.println("Removing menu metadata.");
             player.removeMetadata(IN_MENU_METADATA, TradeRoutes.getInstance());
         }
     }
@@ -53,7 +45,6 @@ public class MenuListener implements Listener {
     public void onPlayerLeave(PlayerQuitEvent event) {
         final Player player = event.getPlayer();
         if (player.hasMetadata(IN_MENU_METADATA)) {
-            System.out.println("Removing menu metadata.");
             player.removeMetadata(IN_MENU_METADATA, TradeRoutes.getInstance());
         }
     }

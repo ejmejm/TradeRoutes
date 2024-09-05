@@ -1,0 +1,22 @@
+# Max level a trader can level up to.
+max_level: 1 # Levels are not yet implemented
+
+# Whether a trader NPC that gave a mission will replace the taken mission when
+# it is completed/failed. If false, then players will have to wait for the mission
+# to refresh on the normal timer (mission_refresh_interval).
+replace_mission_on_completion: true
+replace_mission_on_failure: false
+
+levels:
+  1: &level_template
+    caravan_health: 80.0
+    mission_refresh_interval: 60 # In minutes
+    # The maximum number of trade routes an individual trader can have at a given time.
+    trader_max_missions: 10 # Max is 36
+
+  # These are not used yet
+  # 2: *level_template
+  # 3:
+  #   <<: *level_template
+  #   caravan_health: 100.0
+  #   mission_refresh_interval: 30 # In minutes

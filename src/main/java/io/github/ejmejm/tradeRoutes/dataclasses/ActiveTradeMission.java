@@ -2,10 +2,7 @@ package io.github.ejmejm.tradeRoutes.dataclasses;
 
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
-import io.github.ejmejm.tradeRoutes.Constants;
-import io.github.ejmejm.tradeRoutes.ItemUtils;
-import io.github.ejmejm.tradeRoutes.TradeRoutes;
-import io.github.ejmejm.tradeRoutes.TraderDatabase;
+import io.github.ejmejm.tradeRoutes.*;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -78,8 +75,9 @@ public class ActiveTradeMission {
         Location spawnLocation = player.getLocation();
         Camel camel = (Camel) player.getWorld().spawnEntity(spawnLocation, EntityType.CAMEL);
         camel.customName(Component.text("Trade Caravan"));
-        Objects.requireNonNull(camel.getAttribute(Attribute.GENERIC_MAX_HEALTH)).setBaseValue(CAMEL_HEALTH);
-        camel.setHealth(CAMEL_HEALTH);
+        float caravan_health = TradeConfig.getFloat("caravan_health", missionSpec.getEndTrader().getLevel());
+        Objects.requireNonNull(camel.getAttribute(Attribute.GENERIC_MAX_HEALTH)).setBaseValue(caravan_health);
+        camel.setHealth(caravan_health);
         camel.setRemoveWhenFarAway(false);
         PotionEffect glowEffect = new PotionEffect(
             PotionEffectType.GLOWING, PotionEffect.INFINITE_DURATION,
@@ -123,7 +121,11 @@ public class ActiveTradeMission {
         // Remove mission from database
         try {
             TraderDatabase db = TraderDatabase.getInstance();
-            replaceOriginalMission();
+            if (TradeConfig.getBool("replace_mission_on_completion")) {
+                replaceOriginalMission();
+            } else if (!startStillHasMission()) {
+                db.removeTradeMissionSpec(missionSpec);
+            }
             db.removeActiveTradeMission(this);
         } catch (SQLException e) {
             TradeRoutes.getInstance().getLogger().severe(
@@ -159,8 +161,11 @@ public class ActiveTradeMission {
         // Remove mission from database
         try {
             TraderDatabase db = TraderDatabase.getInstance();
-            if (!startStillHasMission())
+            if (TradeConfig.getBool("replace_mission_on_failure")) {
+                replaceOriginalMission();
+            } else if (!startStillHasMission()) {
                 db.removeTradeMissionSpec(missionSpec);
+            }
             db.removeActiveTradeMission(this);
         } catch (SQLException e) {
             TradeRoutes.getInstance().getLogger().severe(

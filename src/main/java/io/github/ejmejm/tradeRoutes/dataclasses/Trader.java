@@ -12,6 +12,7 @@ import de.oliver.fancynpcs.api.FancyNpcsPlugin;
 import de.oliver.fancynpcs.api.Npc;
 import de.oliver.fancynpcs.api.NpcData;
 import de.oliver.fancynpcs.api.utils.SkinFetcher;
+import io.github.ejmejm.tradeRoutes.TradeConfig;
 import io.github.ejmejm.tradeRoutes.TradeRoutes;
 import io.github.ejmejm.tradeRoutes.TraderDatabase;
 import io.github.ejmejm.tradeRoutes.gui.TradeRouteMenu;
@@ -45,8 +46,9 @@ public class Trader {
     @DatabaseField
     private String serializedMissionData;
 
-    private int maxMissions = 20;
-    private Duration missionDuration = Duration.ofMinutes(30); // Default 30 minutes
+    @DatabaseField
+    private int level = 1;
+
     private transient List<TraderMission> currentMissions;
 
     // No-args constructor required by ORMLite
@@ -215,9 +217,10 @@ public class Trader {
                 getCurrentMissions().remove(expiredMission);
                 TraderDatabase.getInstance().removeTradeMissionSpec(expiredMission.getMissionSpec());
                 missionsUpdated = true;
+                Duration refreshInterval = getMissionRefreshInterval();
                 if (TraderDatabase.getInstance().traderExists(endTrader.getUUID())) {
                     Duration timeSinceExpiration = Duration.between(expiredMission.getExpirationTime(), now);
-                    Duration offset = missionDuration.multipliedBy(timeSinceExpiration.dividedBy(missionDuration));
+                    Duration offset = refreshInterval.multipliedBy(timeSinceExpiration.dividedBy(refreshInterval));
                     Instant newStartTime = expiredMission.getExpirationTime().plus(offset);
                     addNewMission(endTrader, newStartTime);
                 }
@@ -342,16 +345,16 @@ public class Trader {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        Instant expirationTime = baseTime.plus(missionDuration);
+        Instant expirationTime = baseTime.plus(getMissionRefreshInterval());
 
         List<TraderMission> currentMissions = getCurrentMissions();
 
         currentMissions.add(new TraderMission(newMissionSpec, baseTime, expirationTime));
 
         // Ensure we don't exceed maxMissions
-        if (currentMissions.size() > maxMissions) {
+        if (currentMissions.size() > getMaxMissions()) {
             currentMissions.sort(Comparator.comparing(TraderMission::getStartTime));
-            this.currentMissions = currentMissions.subList(0, maxMissions);
+            this.currentMissions = currentMissions.subList(0, getMaxMissions());
         }
     }
 
@@ -379,26 +382,38 @@ public class Trader {
     public Npc getNpc() {
         return FancyNpcsPlugin.get().getNpcManager().getNpcById(uuid);
     }
+
     public String getName() {
         return getNpc().getData().getName();
     }
+
     public Location getLocation() {
         return getNpc().getData().getLocation();
     }
+
     public String getAffiliation() {
         return affiliation;
     }
+
     public String getUUID() { return uuid; }
+
+    public int getMaxMissions() {
+        return TradeConfig.getInt("trader_max_missions", this.level);
+    }
+
+    public Duration getMissionRefreshInterval() {
+        return Duration.ofMinutes(
+                TradeConfig.getInt("mission_refresh_interval", this.level));
+    }
 
     public void setAffiliation(String affiliation) { this.affiliation = affiliation; }
     public void setUUID(String uuid) { this.uuid = uuid; }
 
-    public int getMaxMissions() {
-        return maxMissions;
+    public int getLevel() {
+        return level;
     }
-
-    public void setMaxMissions(int maxMissions) {
-        this.maxMissions = maxMissions;
+    public void setLevel(int level) {
+        this.level = level;
     }
 
     private List<TraderMission> getCurrentMissions() {

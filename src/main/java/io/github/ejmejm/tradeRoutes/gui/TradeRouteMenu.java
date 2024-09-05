@@ -19,10 +19,10 @@ public class TradeRouteMenu extends Menu {
 
     public TradeRouteMenu(Trader trader) {
 
-        //this.setSize(9*3);
+        this.setSize(9 * 4);
         this.setTitle("Available Trade Requests");
 
-        int maxTradeRoutes = 9 * 3;
+        int maxTradeRoutes = 9 * 4;
         int tradeRouteCount = 0;
 
         // Add buttons for each trade destination

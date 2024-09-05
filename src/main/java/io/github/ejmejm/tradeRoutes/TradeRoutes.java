@@ -72,8 +72,9 @@ public final class TradeRoutes extends JavaPlugin {
         // Load configs
         try {
             ItemValues.initialize();
+            TradeConfig.initialize();
         } catch (IOException | InvalidConfigurationException e) {
-            getLogger().severe("Failed to initialize item values: " + e);
+            getLogger().severe("Failed to initialize configs: " + e);
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
