@@ -11,6 +11,8 @@ import java.util.*;
 @DatabaseTable(tableName = "trade_mission_specs")
 public class TradeMissionSpec {
 
+    private static final int MAX_ITEM_SAMPLE_ITERATIONS = 20;
+
     @DatabaseField(generatedId = true)
     private int id;
 
@@ -86,8 +88,11 @@ public class TradeMissionSpec {
         float minRewardValue = baseRewardValue * (1 - rewardFluctuation);
         float maxRewardValue = baseRewardValue * (1 + rewardFluctuation);
 
-        List<ItemStack> requiredItems = generateTradeItems(minReqValue, maxReqValue, minReqItems, maxReqItems, TradeList.REQUIRED_ITEMS);
-        List<ItemStack> rewards = generateTradeItems(minRewardValue, maxRewardValue, minRewardItems, maxRewardItems, TradeList.REWARDS);
+        Map<TradeItem, Double> requirementPool = TradeConfig.getRequirementPool(traderLevel);
+        Map<TradeItem, Double> rewardPool = TradeConfig.getRewardPool(traderLevel);
+
+        List<ItemStack> requiredItems = generateTradeItems(minReqValue, maxReqValue, minReqItems, maxReqItems, requirementPool);
+        List<ItemStack> rewards = generateTradeItems(minRewardValue, maxRewardValue, minRewardItems, maxRewardItems, rewardPool);
         
         return new TradeMissionSpec(requiredItems, startTrader, endTrader, rewards);
     }
@@ -143,41 +148,81 @@ public class TradeMissionSpec {
         return new TradeMissionSpec(stockRequiredItems, startTrader, endTrader, stockRewards);
     }
 
+    /**
+     * Generates a list of trade items based on specified parameters.
+     *
+     * @param minValue Minimum total value of generated items.
+     * @param maxValue Maximum total value of generated items.
+     * @param minUniqueItems Minimum number of unique items to generate.
+     * @param maxUniqueItems Maximum number of unique items to generate.
+     * @param stockList Map of TradeItems and their probabilities.
+     * @return List of generated ItemStacks.
+     */
     public static List<ItemStack> generateTradeItems(
             float minValue,
             float maxValue,
             int minUniqueItems,
             int maxUniqueItems,
-            List<TradeItem> stockList) {
+            Map<TradeItem, Double> stockList) {
         Random random = new Random();
         List<ItemStack> generatedItems = new ArrayList<>();
-        HashMap<ItemStack, Float> itemStackValues = new HashMap<>();
-        float totalValue = 0;
+        HashSet<TradeItem> usedItems = new HashSet<>();
+        HashMap<ItemStack, Double> itemStackValues = new HashMap<>();
+        double totalValue = 0;
         int uniqueItemsCount = random.nextInt(maxUniqueItems - minUniqueItems + 1) + minUniqueItems;
-        int maxRetries = 5;
-        int retryCount = 0;
+        int iteration = 0;
 
-        while (generatedItems.size() < uniqueItemsCount && totalValue < maxValue) {
-            TradeItem tradeItem = stockList.get(random.nextInt(stockList.size()));
-            float minStackVal = tradeItem.getValuePerItem() * tradeItem.getMinQuantity();
+        // Loop until we have the target number of unique items and reach minValue
+        // Or until we've tried MAX_ITEM_SAMPLE_ITERATIONS times
+        while ((generatedItems.size() < uniqueItemsCount || totalValue < minValue)
+                && iteration < MAX_ITEM_SAMPLE_ITERATIONS) {
+            // Try to add another item to reach minValue
+            iteration++;
+            
+            // Sample a random item from the stock list
+            TradeItem tradeItem = sampleRandomItem(stockList);
+            
+            // If we already have this item, skip it
+            if (usedItems.contains(tradeItem)) {
+                continue;
+            }
+
+            // Ensure the minimum stack of this item will not push us over the maxValue
+            double minStackVal = tradeItem.getValuePerItem() * tradeItem.getMinQuantity();
             if (totalValue + minStackVal <= maxValue) {
+
+                // Get the maximum stack quantity that can be added without exceeding maxValue
                 int maxStackQuantity = (int) ((maxValue - totalValue) / tradeItem.getValuePerItem());
                 maxStackQuantity = Math.min(maxStackQuantity, tradeItem.getMaxQuantity());
-                int quantity = random.nextInt(
-                        maxStackQuantity - tradeItem.getMinQuantity() + 1) + tradeItem.getMinQuantity();
 
-                float stackValue = tradeItem.getValuePerItem() * quantity;
+                // Get the minimum stack quantity
+                int minStackQuantity = tradeItem.getMinQuantity();
+
+                // If this is the last item, calculate the minStack value needed to reach minValue
+                if (generatedItems.size() == uniqueItemsCount - 1) {
+                    minStackQuantity = (int) Math.ceil((minValue - totalValue) / tradeItem.getValuePerItem());
+                    minStackQuantity = Math.min(Math.max(minStackQuantity, tradeItem.getMinQuantity()), maxStackQuantity);
+                }
+
+                // Sample a quantity that is within the range to not push us over the maxValue
+                int quantity = random.nextInt(
+                        maxStackQuantity - minStackQuantity + 1) + minStackQuantity;
+
+                double stackValue = tradeItem.getValuePerItem() * quantity;
 
                 totalValue += stackValue;
-                ItemStack itemStack = tradeItem.getItem().clone();
+                ItemStack itemStack = tradeItem.getItem();
                 itemStack.setAmount(quantity);
 
                 generatedItems.add(itemStack);
+                usedItems.add(tradeItem);
                 itemStackValues.put(itemStack, stackValue);
             }
 
-            // If we reach the maximum number of unique items but totalValue is still below minValue
-            if (generatedItems.size() >= uniqueItemsCount && totalValue < minValue) {
+            // If we reach the maximum number of unique items and have more tries left,
+            // but totalValue is still below minValue
+            if (iteration < MAX_ITEM_SAMPLE_ITERATIONS
+                    && generatedItems.size() >= uniqueItemsCount && totalValue < minValue) {
                 // Find and remove the least valuable item stack
                 ItemStack leastValuable = generatedItems.stream()
                         .min(Comparator.comparing(itemStackValues::get))
@@ -187,18 +232,30 @@ public class TradeMissionSpec {
                 generatedItems.remove(leastValuable);
                 itemStackValues.remove(leastValuable);
             }
-
-            // Try to add another item to reach minValue
-            retryCount++;
-
-            // If max retries exceeded, break out of the loop
-            if (retryCount >= maxRetries) {
-                break;
-            }
         }
 
         // Final check: if totalValue is still below minValue, just return what was generated
         return generatedItems;
+    }
+
+    /**
+     * Samples a random TradeItem from the given stock list based on their probabilities.
+     *
+     * @param stockList Map of TradeItems and their probabilities.
+     * @return A randomly sampled TradeItem.
+     */
+    private static TradeItem sampleRandomItem(Map<TradeItem, Double> stockList) {
+        Random random = new Random();
+        double randomValue = random.nextDouble();
+        double cumulativeProbability = 0.0;
+        for (Map.Entry<TradeItem, Double> entry : stockList.entrySet()) {
+            cumulativeProbability += entry.getValue();
+            if (randomValue <= cumulativeProbability) {
+                return entry.getKey();
+            }
+        }
+        // Fallback in case of rounding errors
+        return stockList.keySet().iterator().next();
     }
 
     public int getId() {

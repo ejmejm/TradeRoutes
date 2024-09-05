@@ -192,9 +192,15 @@ public class Trader {
             currentMissions = new ArrayList<>();
             Map<String, Trader> allTraders = TraderDatabase.getInstance().getTraders();
             allTraders.remove(this.getUUID());
+
+            float minDistance = TradeConfig.getFloat("min_route_distance", this.level);
+            float maxDistance = TradeConfig.getFloat("max_route_distance", this.level);
             
             for (Trader endTrader : allTraders.values()) {
-                addNewMission(endTrader, Instant.now());
+                double distance = this.getLocation().distance(endTrader.getLocation());
+                if (distance >= minDistance && distance <= maxDistance) {
+                    addNewMission(endTrader, Instant.now());
+                }
             }
             updateSerializedMissionData();
         }
