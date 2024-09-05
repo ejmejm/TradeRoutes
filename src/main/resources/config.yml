@@ -13,6 +13,9 @@ announce_mission_starts: true
 # Distance player needs to be from the mission start location to get the announcement
 announce_mission_distance: 10000
 
+# Time a town must wait before they can spawn a trader again after despawning a previous one
+spawn_trader_cooldown: 30 # In minutes
+
 # There should be one entry under levels for every level from 1 to `max_level`.
 # For example, if you have `max_level` set to 4, you should have keys for levels 1, 2, 3, and 4.
 # Each of the options under this part of the config can change with the level of a trader.

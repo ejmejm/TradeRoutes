@@ -61,7 +61,7 @@ public final class TradeRoutes extends JavaPlugin {
                     initializeDatabase();
 
                     // Register a task to frequently check to make sure all missions are okay
-                    MissionManager.registerMissionCheckTask(getInstance());
+                    TraderManager.registerMissionCheckTask(getInstance());
                 }
 
             }

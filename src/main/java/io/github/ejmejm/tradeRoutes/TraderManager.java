@@ -3,9 +3,15 @@ package io.github.ejmejm.tradeRoutes;
 import io.github.ejmejm.tradeRoutes.dataclasses.Trader;
 import org.bukkit.plugin.Plugin;
 
-public class MissionManager {
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class TraderManager {
 
     private static final long MISSION_CHECK_INTERVAL = 2 * 60 * 20; // 2 minutes
+    private static Map<String, Instant> lastAffiliationTraderSpawnTime = new ConcurrentHashMap<>();
 
     /**
      * Fixes missions for all traders in the database.
@@ -22,7 +28,19 @@ public class MissionManager {
 
     public static void registerMissionCheckTask(Plugin plugin) {
         plugin.getServer().getScheduler().runTaskTimerAsynchronously(
-                plugin, MissionManager::FixAllTraderMissions, 5, MISSION_CHECK_INTERVAL);
+                plugin, TraderManager::FixAllTraderMissions, 5, MISSION_CHECK_INTERVAL);
+    }
+
+    public static void updateAffiliationTraderSpawnTime(String affiliation, Instant time) {
+        lastAffiliationTraderSpawnTime.put(affiliation, time);
+    }
+
+    public static Duration getTimeSinceLastTraderSpawn(String affiliation) {
+        Instant lastUpdate = lastAffiliationTraderSpawnTime.get(affiliation);
+        if (lastUpdate == null) {
+            return Duration.ofSeconds(Long.MAX_VALUE);
+        }
+        return Duration.between(lastUpdate, Instant.now());
     }
 
 }

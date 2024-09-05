@@ -3,7 +3,9 @@ package io.github.ejmejm.tradeRoutes.subcommands;
 import com.palmergames.bukkit.towny.TownyAPI;
 import com.palmergames.bukkit.towny.object.Town;
 import io.github.ejmejm.tradeRoutes.PluginChecker;
+import io.github.ejmejm.tradeRoutes.TradeConfig;
 import io.github.ejmejm.tradeRoutes.TraderDatabase;
+import io.github.ejmejm.tradeRoutes.TraderManager;
 import io.github.ejmejm.tradeRoutes.dataclasses.Trader;
 import net.kyori.adventure.text.Component;
 import org.bukkit.FluidCollisionMode;
@@ -15,8 +17,9 @@ import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
 import java.sql.SQLException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
 public class SpawnTraderCommand extends SubCommand {
     private static final double maxSpawnDistance = 128;
@@ -86,7 +89,19 @@ public class SpawnTraderCommand extends SubCommand {
             e.printStackTrace();
         }
 
+        // Check cooldown before spawning
+        Duration timeSinceLastSpawn = TraderManager.getTimeSinceLastTraderSpawn(playerTown.getName());
+        int cooldownMinutes = TradeConfig.getInt("spawn_trader_cooldown");
+        if (timeSinceLastSpawn.toMinutes() < cooldownMinutes) {
+            long remainingMinutes = cooldownMinutes - timeSinceLastSpawn.toMinutes();
+            player.sendMessage(Component.text(
+                    "You need to wait " + remainingMinutes + " more minutes before spawning another trader.",
+                    CMD_ERROR_COLOR));
+            return;
+        }
+
         Trader.createAndSpawn(spawnLoc, playerTown.getName(), player);
+        TraderManager.updateAffiliationTraderSpawnTime(playerTown.getName(), Instant.now());
     }
 
     private void createTraderNPC(Location spawnLoc, Player player, String affiliation) {

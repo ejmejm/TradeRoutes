@@ -6,6 +6,7 @@ import de.oliver.fancynpcs.api.FancyNpcsPlugin;
 import io.github.ejmejm.tradeRoutes.PluginChecker;
 import io.github.ejmejm.tradeRoutes.TradeRoutes;
 import io.github.ejmejm.tradeRoutes.TraderDatabase;
+import io.github.ejmejm.tradeRoutes.TraderManager;
 import io.github.ejmejm.tradeRoutes.dataclasses.Trader;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -13,6 +14,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
@@ -94,6 +96,7 @@ public class RemoveTraderCommand extends SubCommand {
             if (traderOpt.isPresent()) {
                 Trader trader = traderOpt.get();
                 removeTraderTransaction(trader);
+                TraderManager.updateAffiliationTraderSpawnTime(trader.getAffiliation(), Instant.now());
 
                 player.sendMessage(Component.text(
                         "Trader with affiliation ", CMD_SUCCESS_COLOR)
