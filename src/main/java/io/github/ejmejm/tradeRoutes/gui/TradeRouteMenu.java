@@ -11,14 +11,14 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class TradeRouteMenu extends Menu {
-
     public TradeRouteMenu(Trader trader) {
-
         this.setSize(9 * 4);
         this.setTitle("Available Trade Requests");
 
@@ -59,29 +59,36 @@ public class TradeRouteMenu extends Menu {
                     // Add requested items
                     lore.add(Component.text("Requested Items:", NamedTextColor.GOLD, TextDecoration.UNDERLINED));
                     for (ItemStack requestedItem : mission.getRequiredItems()) {
-                        lore.add(Component.text("- " + requestedItem.getType(), NamedTextColor.BLUE));
-                        lore.add(Component.text(" (" + requestedItem.getAmount() + ")", NamedTextColor.AQUA));
+                        lore.add(Component.text("- " + requestedItem.getType(), NamedTextColor.BLUE)
+                                .append(Component.text(" (" + requestedItem.getAmount() + ")", NamedTextColor.AQUA)));
                     }
-
                     // Add rewards
                     lore.add(Component.text(""));
                     lore.add(Component.text("Rewards:", NamedTextColor.GOLD, TextDecoration.UNDERLINED));
-                    for (ItemStack requestedItem : mission.getRewards()) {
-                        lore.add(Component.text("- " + requestedItem.getType(), NamedTextColor.BLUE));
-                        lore.add(Component.text(" (" + requestedItem.getAmount() + ")", NamedTextColor.AQUA));
+                    for (ItemStack rewardItem : mission.getRewards()) {
+                        lore.add(Component.text("- " + rewardItem.getType(), NamedTextColor.BLUE)
+                                .append(Component.text(" (" + rewardItem.getAmount() + ")", NamedTextColor.AQUA)));
                     }
+
                     // Mark as taken if taken
                     if (mission.getTaken()) {
                         lore = lore.stream()
                                 .map(component -> component
                                         .decoration(TextDecoration.STRIKETHROUGH, true)
-                                        .color(NamedTextColor.GRAY))
+                                        .color(NamedTextColor.GRAY)
+                                )
                                 .collect(Collectors.toList());
 
                         lore.add(Component.text(""));
                         lore.add(Component.text("TAKEN", NamedTextColor.RED, TextDecoration.BOLD));
                     }
 
+                    Instant expirationTime = trader.getMissionExpirationTime(mission.getId());
+                    if (expirationTime != null) {
+                        lore.add(Component.text(""));
+                        lore.add(Component.text("Refreshes in: " + getTimeUntil(expirationTime), NamedTextColor.YELLOW));
+                    }
+                    
                     meta.lore(lore);
                     item.setItemMeta(meta);
                     return item;
@@ -94,6 +101,23 @@ public class TradeRouteMenu extends Menu {
             });
 
             tradeRouteCount++;
+        }
+    }
+
+    private String getTimeUntil(Instant expirationTime) {
+        Duration duration = Duration.between(Instant.now(), expirationTime);
+        long days = duration.toDays();
+        long hours = duration.toHoursPart();
+        long minutes = duration.toMinutesPart();
+
+        if (days > 0) {
+            return days + (days == 1 ? " day" : " days");
+        } else if (hours > 0) {
+            return hours + (hours == 1 ? " hour" : " hours");
+        } else if (minutes > 0) {
+            return minutes + (minutes == 1 ? " minute" : " minutes");
+        } else {
+            return "<1 minute";
         }
     }
 

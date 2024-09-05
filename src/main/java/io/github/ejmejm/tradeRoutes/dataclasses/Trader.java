@@ -49,7 +49,7 @@ public class Trader {
     @DatabaseField
     private int level = 1;
 
-    private transient List<TraderMission> currentMissions;
+    private transient Map<Integer, TraderMission> currentMissions;
 
     // No-args constructor required by ORMLite
     public Trader() {}
@@ -162,12 +162,12 @@ public class Trader {
      * @return A list of TradeMissionSpec objects representing the current trade missions.
      */
     public List<TradeMissionSpec> getTradeMissions() {
-        List<TraderMission> currentMissions = getCurrentMissions();
+        Map<Integer, TraderMission> currentMissions = getCurrentMissions();
 
         removeInvalidMissions();
         replaceExpiredMissions();
 
-        return currentMissions.stream()
+        return currentMissions.values().stream()
             .map(TraderMission::getMissionSpec)
             .sorted(Comparator.comparingDouble(spec -> getLocation().distance(spec.getEndTrader().getLocation())))
             .toList();
@@ -180,16 +180,19 @@ public class Trader {
      */
     public void initializeMissions() {
         if (serializedMissionData != null && !serializedMissionData.isEmpty()) {
-            currentMissions = deserializeMissionData();
-            for (TraderMission mission : currentMissions) {
+            currentMissions = new HashMap<>();
+            List<TraderMission> missionList = deserializeMissionData();
+            for (TraderMission mission : missionList) {
                 if (mission.getMissionSpec() == null) {
                     TradeRoutes.getInstance().getLogger().warning(
                             "Mission spec is null for mission " + mission.getMissionSpecId());
                     replaceMission(mission.getMissionSpecId(), true);
+                } else {
+                    currentMissions.put(mission.getMissionSpecId(), mission);
                 }
             }
         } else {
-            currentMissions = new ArrayList<>();
+            currentMissions = new HashMap<>();
             Map<String, Trader> allTraders = TraderDatabase.getInstance().getTraders();
             allTraders.remove(this.getUUID());
 
@@ -213,14 +216,14 @@ public class Trader {
         Instant now = Instant.now();
         boolean missionsUpdated = false;
 
-        List<TraderMission> expiredMissions = getCurrentMissions().stream()
+        List<TraderMission> expiredMissions = getCurrentMissions().values().stream()
             .filter(mission -> mission.getExpirationTime().isBefore(now))
             .toList();
 
         for (TraderMission expiredMission : expiredMissions) {
             Trader endTrader = expiredMission.getMissionSpec().getEndTrader();
             try {
-                getCurrentMissions().remove(expiredMission);
+                getCurrentMissions().remove(expiredMission.getMissionSpecId());
                 TraderDatabase.getInstance().removeTradeMissionSpec(expiredMission.getMissionSpec());
                 missionsUpdated = true;
                 Duration refreshInterval = getMissionRefreshInterval();
@@ -243,19 +246,20 @@ public class Trader {
      * Removes missions with invalid start or end traders.
      */
     private void removeInvalidMissions() {
-        List<TraderMission> invalidMissions = getCurrentMissions().stream()
+        List<Integer> invalidMissionIds = getCurrentMissions().values().stream()
             .filter(mission -> {
                 TradeMissionSpec spec = mission.getMissionSpec();
                 return spec == null || spec.getStartTrader() == null || spec.getEndTrader() == null;
             })
+            .map(TraderMission::getMissionSpecId)
             .toList();
 
-        if (!invalidMissions.isEmpty()) {
-            for (TraderMission invalidMission : invalidMissions) {
-                removeMission(invalidMission.getMissionSpecId(), true);
+        if (!invalidMissionIds.isEmpty()) {
+            for (int invalidMissionId : invalidMissionIds) {
+                removeMission(invalidMissionId, true);
             }
             updateSerializedMissionData();
-            TradeRoutes.getInstance().getLogger().info("Removed " + invalidMissions.size() + " invalid missions for trader " + getUUID());
+            TradeRoutes.getInstance().getLogger().info("Removed " + invalidMissionIds.size() + " invalid missions for trader " + getUUID());
         }
     }
     
@@ -267,15 +271,10 @@ public class Trader {
      * @param deleteFromDatabase Whether to delete the old mission from the database.
      */
     public void replaceMission(int oldMissionId, boolean deleteFromDatabase) {
-        // Find the mission that contains the old mission spec
-        TraderMission missionToRemove = getCurrentMissions().stream()
-            .filter(mission -> mission.getMissionSpecId() == oldMissionId)
-            .findFirst()
-            .orElse(null);
+        TraderMission missionToRemove = getCurrentMissions().remove(oldMissionId);
 
         if (missionToRemove == null)
             return;
-        getCurrentMissions().remove(missionToRemove);
 
         try {
             TradeMissionSpec oldMissionSpec = missionToRemove.getMissionSpec();
@@ -307,15 +306,10 @@ public class Trader {
      * @param deleteFromDatabase Whether to delete the mission from the database.
      */
     public void removeMission(int missionId, boolean deleteFromDatabase) {
-        // Find the mission that contains the mission spec to remove
-        TraderMission missionToDelete = getCurrentMissions().stream()
-            .filter(mission -> mission.getMissionSpecId() == missionId)
-            .findFirst()
-            .orElse(null);
+        TraderMission missionToDelete = getCurrentMissions().remove(missionId);
 
         if (missionToDelete == null)
             return;
-        getCurrentMissions().remove(missionToDelete);
 
         try {
             TradeMissionSpec missionSpec = missionToDelete.getMissionSpec();
@@ -353,14 +347,20 @@ public class Trader {
         }
         Instant expirationTime = baseTime.plus(getMissionRefreshInterval());
 
-        List<TraderMission> currentMissions = getCurrentMissions();
+        Map<Integer, TraderMission> currentMissions = getCurrentMissions();
 
-        currentMissions.add(new TraderMission(newMissionSpec, baseTime, expirationTime));
+        TraderMission newMission = new TraderMission(newMissionSpec, baseTime, expirationTime);
+        currentMissions.put(newMissionSpec.getId(), newMission);
 
         // Ensure we don't exceed maxMissions
         if (currentMissions.size() > getMaxMissions()) {
-            currentMissions.sort(Comparator.comparing(TraderMission::getStartTime));
-            this.currentMissions = currentMissions.subList(0, getMaxMissions());
+            List<TraderMission> sortedMissions = new ArrayList<>(currentMissions.values());
+            sortedMissions.sort(Comparator.comparing(TraderMission::getStartTime));
+            this.currentMissions = new HashMap<>();
+            for (int i = 0; i < getMaxMissions(); i++) {
+                TraderMission mission = sortedMissions.get(i);
+                this.currentMissions.put(mission.getMissionSpecId(), mission);
+            }
         }
     }
 
@@ -368,7 +368,7 @@ public class Trader {
      * Updates the serialized mission data in the database.
      */
     private void updateSerializedMissionData() {
-        serializedMissionData = gson.toJson(getCurrentMissions());
+        serializedMissionData = gson.toJson(new ArrayList<>(getCurrentMissions().values()));
         try {
             TraderDatabase.getInstance().updateTrader(this);
         } catch (SQLException e) {
@@ -422,10 +422,15 @@ public class Trader {
         this.level = level;
     }
 
-    private List<TraderMission> getCurrentMissions() {
+    private Map<Integer, TraderMission> getCurrentMissions() {
         if (currentMissions == null)
             initializeMissions();
         return currentMissions;
+    }
+
+    public Instant getMissionExpirationTime(int missionSpecId) {
+        TraderMission mission = getCurrentMissions().get(missionSpecId);
+        return mission != null ? mission.getExpirationTime() : null;
     }
 
 

@@ -25,7 +25,6 @@ import java.util.*;
 public class ActiveTradeMission {
 
     private static final int MISSION_DURATION = 72 * 60 * 60 * 1000; // 72 hours in milliseconds
-    private static final float CAMEL_HEALTH = 80.0f;
 
     @DatabaseField(generatedId = true)
     private int id;
