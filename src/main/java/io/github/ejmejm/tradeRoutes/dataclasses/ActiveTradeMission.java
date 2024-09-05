@@ -5,8 +5,6 @@ import com.j256.ormlite.table.DatabaseTable;
 import io.github.ejmejm.tradeRoutes.*;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
@@ -113,55 +111,6 @@ public class ActiveTradeMission {
             TradeRoutes.getInstance().getLogger().severe(
                     "Failed to add active trade mission to database: " + e.getMessage());
             return null;
-        }
-        // Announce mission to nearby players
-        if (TradeConfig.getBool("announce_mission_starts")) {
-            float announceDistance = TradeConfig.getFloat("announce_mission_distance");
-            Location startLoc = missionSpec.getStartTrader().getLocation();
-            Location endLoc = missionSpec.getEndTrader().getLocation();
-
-            for (Player nearbyPlayer : player.getWorld().getPlayers()) {
-                // Don't announce to the player who started the mission
-                if (nearbyPlayer.getUniqueId().equals(player.getUniqueId()))
-                    continue;
-
-                if (nearbyPlayer.getLocation().distance(startLoc) <= announceDistance) {
-                    int distanceToPlayer = (int) nearbyPlayer.getLocation().distance(player.getLocation());
-                    Component announcement = Component.text(
-                            "A player has started a trade mission ", TextColor.color(159, 84, 255), TextDecoration.BOLD)
-
-                        .append(Component.text(" <", NamedTextColor.BLUE))
-                        .append(Component.text(
-                                distanceToPlayer, NamedTextColor.BLUE, TextDecoration.BOLD, TextDecoration.ITALIC))
-                        .append(Component.text(" blocks from you>:", NamedTextColor.BLUE))
-
-                        .append(Component.newline())
-                        .append(Component.text(
-                                missionSpec.getStartTrader().getAffiliation(),
-                                NamedTextColor.GOLD, TextDecoration.BOLD, TextDecoration.ITALIC))
-                        .append(
-                                Component.text(" (" + startLoc.getBlockX()
-                                        + ", " + startLoc.getBlockY()
-                                        + ", " + startLoc.getBlockZ()
-                                        + ")", NamedTextColor.GRAY))
-
-                        .append(Component.text(" -> ", NamedTextColor.WHITE))
-
-                        .append(Component.text(
-                                missionSpec.getEndTrader().getAffiliation(),
-                                NamedTextColor.GOLD, TextDecoration.BOLD, TextDecoration.ITALIC))
-                        .append(Component.text(" (" + endLoc.getBlockX() + ", "
-                                + endLoc.getBlockY()
-                                + ", " + endLoc.getBlockZ()
-                                + ")", NamedTextColor.GRAY));
-
-                    nearbyPlayer.sendMessage(announcement);
-                }
-            }
-
-            player.sendMessage(Component.text(
-                    "Your location and trade route have been announced to all players within " + 
-                    (int) announceDistance + " blocks", TextColor.color(159, 84, 255)));
         }
 
         return mission;
