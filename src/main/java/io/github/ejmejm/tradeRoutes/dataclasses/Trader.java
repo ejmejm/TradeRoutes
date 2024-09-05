@@ -104,6 +104,8 @@ public class Trader {
         npc.spawnForAll();
         plugin.getNpcManager().saveNpcs(false);
 
+        trader.connectToNpcManager();
+
         return trader;
     }
 
