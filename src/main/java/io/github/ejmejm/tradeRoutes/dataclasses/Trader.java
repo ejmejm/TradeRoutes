@@ -336,6 +336,23 @@ public class Trader {
     }
 
     /**
+     * Refreshes all missions for this trader.
+     * This method replaces every mission with a new one and then calls fixMissions.
+     * Missions are only deleted from the database if they haven't been taken.
+     */
+    public void refreshMissions() {
+        List<Integer> missionIds = new ArrayList<>(getCurrentMissions().keySet());
+        
+        for (int missionId : missionIds) {
+            TraderMission mission = getCurrentMissions().get(missionId);
+            boolean deleteFromDatabase = !mission.getMissionSpec().getTaken();
+            replaceMission(missionId, deleteFromDatabase);
+        }
+
+        fixMissions();
+    }
+
+    /**
      * Adds a new mission to the current missions list.
      *
      * @param endTrader The end Trader for the new mission.

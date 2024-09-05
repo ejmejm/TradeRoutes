@@ -43,10 +43,6 @@ public class SpawnTraderCommand extends SubCommand {
         return List.of(BASE_PERMISSION, ANY_AFFILIATION_PERMISSION);
     }
 
-    private UUID genBlankUUID() {
-        return UUID.fromString("00000000-0000-0000-0000-000000000000");
-    }
-
     private void createTraderNPC(Location spawnLoc, Player player) {
         PluginChecker pluginChecker = PluginChecker.getInstance();
 

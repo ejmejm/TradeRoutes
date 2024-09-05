@@ -66,6 +66,7 @@ permissions:
       traderoutes.command.trader.spawn.any: true
       traderoutes.command.trader.remove.town: true
       traderoutes.command.trader.remove.any: true
+      traderoutes.command.trader.refresh: true
 
 
   ### All single commands ###
@@ -95,4 +96,8 @@ permissions:
     default: op
   traderoutes.command.confirm:
     description: "Ability to confirm one of multiple possible actions"
+    default: op
+
+  traderoutes.command.trader.refresh:
+    description: "Ability to refresh trader missions"
     default: op

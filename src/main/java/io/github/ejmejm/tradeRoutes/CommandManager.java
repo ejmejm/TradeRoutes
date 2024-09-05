@@ -34,7 +34,8 @@ public class CommandManager implements CommandExecutor, TabExecutor {
                 new SpawnTraderCommand(),
                 new CancelMissionCommand(),
                 new ConfirmCommand(),
-                new RemoveTraderCommand()
+                new RemoveTraderCommand(),
+                new RefreshMissionsCommand()
         );
 
         subcommands = commandList.stream()
