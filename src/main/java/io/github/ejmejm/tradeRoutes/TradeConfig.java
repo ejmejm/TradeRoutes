@@ -1,5 +1,6 @@
 package io.github.ejmejm.tradeRoutes;
 
+import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
 import java.io.IOException;
@@ -10,7 +11,7 @@ public class TradeConfig {
     private static YamlConfiguration config;
     private static Map<Integer, Map<String, Object>> levelConfigs = new HashMap<>();
 
-    public static void initialize() throws IOException {
+    public static void initialize() throws IOException, InvalidConfigurationException {
         TradeRoutes plugin = TradeRoutes.getInstance();
         File file = new File(plugin.getDataFolder(), "config.yml");
         
@@ -19,7 +20,9 @@ public class TradeConfig {
             plugin.saveResource("config.yml", false);
         }
 
-        config = YamlConfiguration.loadConfiguration(file);
+        config = new YamlConfiguration();
+        config.options().parseComments(true);
+        config.load(file);
 
         // Load level-specific configurations
         if (config.contains("levels")) {

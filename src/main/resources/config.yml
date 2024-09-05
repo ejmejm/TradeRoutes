@@ -1,5 +1,6 @@
 # Max level a trader can level up to.
-max_level: 1 # Levels are not yet implemented
+# Levels are not yet implemented
+max_level: 1
 
 # Whether a trader NPC that gave a mission will replace the taken mission when
 # it is completed/failed. If false, then players will have to wait for the mission
@@ -7,12 +8,64 @@ max_level: 1 # Levels are not yet implemented
 replace_mission_on_completion: true
 replace_mission_on_failure: false
 
+# There should be one entry under levels for every level from 1 to `max_level`.
+# For example, if you have `max_level` set to 4, you should have keys for levels 1, 2, 3, and 4.
+# Each of the options under this part of the config can change with the level of a trader.
+# You could for example increase the number of missions a trader is able to offer at once
+# by increasing the value of `trader_max_missions` for increasingly higher trader levels.
+# If you want everything to stay the same as for level 1, you can just set the value of a level
+# key to *level_template.
 levels:
+
   1: &level_template
-    caravan_health: 80.0
+    caravan_health: 80.0 # Max health of the pack animal used to carry goods
+
+    # Time in between missions refreshing
     mission_refresh_interval: 60 # In minutes
+
     # The maximum number of trade routes an individual trader can have at a given time.
-    trader_max_missions: 10 # Max is 36
+    # Max is 36.
+    trader_max_missions: 10
+
+    # Minimum and maximum distance between two traders for trade missions to be available
+    min_route_distance: 300
+    max_route_distance: 10000
+
+    # The average value of rewards offered for missions of distance `base_reward_scaling_distance`
+    base_reward_value: 1024
+
+    # The average value of the items required for missions of distance `base_reward_scaling_distance`
+    base_requirements_value: 512
+
+    # How much the reward and requirements can fluctuate for any given missions
+    reward_fluctuation_fraction: 0.1 # 0.1 = plus or minus 10% reward
+    requirements_fluctuation_fraction: 0.1 # 0.1 = plus or minus 10% requirements
+
+    # Minimum and maximum multipliers for the reward and requirements value based on distance travelled to complete the mission
+    min_reward_scaling_multiplier: 0.1 # 0.5
+    max_reward_scaling_multiplier: 10.0 # 4.0
+
+    min_requirements_scaling_multiplier: 0.4
+    max_requirements_scaling_multiplier: 3.0
+
+    # Minimum and maximum unique number of items in the required and reward lists
+    min_reward_unique_items: 2
+    max_reward_unique_items: 4
+
+    min_requirements_unique_items: 1
+    max_requirements_unique_items: 3
+
+    # Reward and requirements multiplier equals:
+    #   1 - when mission distance is `base_X_scaling_distance`
+    #   `min_X_scaling_multiplier` - when mission distance <= `min_X_scaling_distance`
+    #   `max_X_scaling_multiplier` - when mission distance >= `max_X_scaling_distance`
+    min_reward_scaling_distance: 500
+    base_reward_scaling_distance: 1000
+    max_reward_scaling_distance: 5000
+
+    min_requirements_scaling_distance: 500
+    base_requirements_scaling_distance: 1000
+    max_requirements_scaling_distance: 5000
 
   # These are not used yet
   # 2: *level_template

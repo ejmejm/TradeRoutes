@@ -75,7 +75,7 @@ public class ActiveTradeMission {
         Location spawnLocation = player.getLocation();
         Camel camel = (Camel) player.getWorld().spawnEntity(spawnLocation, EntityType.CAMEL);
         camel.customName(Component.text("Trade Caravan"));
-        float caravan_health = TradeConfig.getFloat("caravan_health", missionSpec.getEndTrader().getLevel());
+        float caravan_health = TradeConfig.getFloat("caravan_health", missionSpec.getStartTrader().getLevel());
         Objects.requireNonNull(camel.getAttribute(Attribute.GENERIC_MAX_HEALTH)).setBaseValue(caravan_health);
         camel.setHealth(caravan_health);
         camel.setRemoveWhenFarAway(false);
