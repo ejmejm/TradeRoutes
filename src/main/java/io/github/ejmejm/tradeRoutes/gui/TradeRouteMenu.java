@@ -193,7 +193,23 @@ public class TradeRouteMenu extends Menu {
        }
 
        private void initiateTradeMission(Player player, Trader trader, TradeMissionSpec missionSpec) {
-            ActiveTradeMission mission = ActiveTradeMission.initiateMission(player, missionSpec);
+           ActiveTradeMission mission;
+           missionSpec.acquireLock();
+           try {
+               if (missionSpec.getTaken()) {
+                   player.sendMessage(Component.text(
+                           "This mission has already been taken by another player.", NamedTextColor.RED));
+                   return;
+               } else if (!missionSpec.isValid()) {
+                   player.sendMessage(Component.text(
+                           "This mission is invalid, try refreshing the menu.", NamedTextColor.RED));
+                   return;
+               }
+
+               mission = ActiveTradeMission.initiateMission(player, missionSpec);
+           } finally {
+               missionSpec.releaseLock();
+           }
 
             if (mission == null) {
                 player.sendMessage(Component.text(

@@ -7,6 +7,7 @@ import io.github.ejmejm.tradeRoutes.TradeConfig;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 @DatabaseTable(tableName = "trade_mission_specs")
 public class TradeMissionSpec {
@@ -34,6 +35,10 @@ public class TradeMissionSpec {
     // Transient fields for quick access
     private transient List<ItemStack> requiredItems;
     private transient List<ItemStack> rewards;
+
+    // Lock for thread-safe operations
+    private final ReentrantLock lock = new ReentrantLock();
+
 
     public TradeMissionSpec() {}
 
@@ -258,6 +263,21 @@ public class TradeMissionSpec {
         return stockList.keySet().iterator().next();
     }
 
+    /*
+     * Checks if start and end traders exist, and makes sure that the mission is within
+     * the config distance bounds.
+     */
+    public boolean isValid() {
+        if (getStartTrader() == null || getEndTrader() == null)
+            return false;
+
+        int level = getStartTrader().getLevel();
+        float minDistance = TradeConfig.getFloat("min_route_distance", level);
+        float maxDistance = TradeConfig.getFloat("max_route_distance", level);
+
+        return getRouteDistance() >= minDistance && getRouteDistance() <= maxDistance;
+    }
+
     public int getId() {
         return id;
     }
@@ -306,4 +326,13 @@ public class TradeMissionSpec {
     public void setTaken(boolean taken) {
         this.taken = taken;
     }
+
+    public void acquireLock() {
+        lock.lock();
+    }
+
+    public void releaseLock() {
+        lock.unlock();
+    }
+
 }

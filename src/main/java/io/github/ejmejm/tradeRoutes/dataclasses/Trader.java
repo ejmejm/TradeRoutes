@@ -8,10 +8,13 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
+import com.palmergames.bukkit.towny.TownyAPI;
+import com.palmergames.bukkit.towny.object.Town;
 import de.oliver.fancynpcs.api.FancyNpcsPlugin;
 import de.oliver.fancynpcs.api.Npc;
 import de.oliver.fancynpcs.api.NpcData;
 import de.oliver.fancynpcs.api.utils.SkinFetcher;
+import io.github.ejmejm.tradeRoutes.PluginChecker;
 import io.github.ejmejm.tradeRoutes.TradeConfig;
 import io.github.ejmejm.tradeRoutes.TradeRoutes;
 import io.github.ejmejm.tradeRoutes.TraderDatabase;
@@ -124,6 +127,14 @@ public class Trader {
             Optional<ActiveTradeMission> activeMission =
                     db.getActiveTradeMissionByPlayer(player.getUniqueId());
             if (activeMission.isEmpty()) {
+                if (PluginChecker.getInstance().isPluginEnabled("Towny")) {
+                    TownyAPI towny = TownyAPI.getInstance();
+                    Town playerTown = towny.getTown(player);
+                    if (playerTown == null || !playerTown.getName().equals(this.getAffiliation())) {
+                        player.sendMessage(Component.text("You can only interact with your own town's trader.", NamedTextColor.RED));
+                        return;
+                    }
+                }
                 db.getTraderById(getUUID()).ifPresent(
                         trader -> new TradeRouteMenu(trader).displayTo(player));
             } else {
@@ -246,13 +257,14 @@ public class Trader {
     }
 
     /**
-     * Removes missions with invalid start or end traders.
+     * Removes missions with invalid start or end traders, and missions out of the required distance range.
      */
     private void removeInvalidMissions() {
+        // Check if mission meets config requirements (min distance and max distance)
         List<Integer> invalidMissionIds = getCurrentMissions().values().stream()
             .filter(mission -> {
                 TradeMissionSpec spec = mission.getMissionSpec();
-                return spec == null || spec.getStartTrader() == null || spec.getEndTrader() == null;
+                return spec == null || !spec.isValid();
             })
             .map(TraderMission::getMissionSpecId)
             .toList();
@@ -276,21 +288,27 @@ public class Trader {
     public void replaceMission(int oldMissionId, boolean deleteFromDatabase) {
         TraderMission missionToRemove = getCurrentMissions().remove(oldMissionId);
 
-        if (missionToRemove == null)
+        // Make sure mission spec isn't null
+        if (missionToRemove == null || missionToRemove.getMissionSpec() == null) {
+            TradeRoutes.getInstance().getLogger().warning("Mission or spec is null, so it could not be replaced!");
             return;
+        }
+
+        // Make sure start and end traders still exist
+        TradeMissionSpec oldMissionSpec = missionToRemove.getMissionSpec();
+        if (oldMissionSpec.getStartTrader() == null || oldMissionSpec.getEndTrader() == null) {
+            TradeRoutes.getInstance().getLogger().warning(
+                    "Start or end trader was null, so mission could not be replaced!");
+            return;
+        }
 
         try {
-            TradeMissionSpec oldMissionSpec = missionToRemove.getMissionSpec();
-            if (oldMissionSpec != null) {
-                if (deleteFromDatabase)
-                    TraderDatabase.getInstance().removeTradeMissionSpec(oldMissionSpec);
+            if (deleteFromDatabase)
+                TraderDatabase.getInstance().removeTradeMissionSpec(oldMissionSpec);
 
-                Trader endTrader = oldMissionSpec.getEndTrader();
-                if (TraderDatabase.getInstance().traderExists(endTrader.getUUID())) {
-                    addNewMission(endTrader, Instant.now());
-                }
-            } else {
-                TradeRoutes.getInstance().getLogger().warning("Mission spec is null, so it could not be replaced!");
+            Trader endTrader = oldMissionSpec.getEndTrader();
+            if (TraderDatabase.getInstance().traderExists(endTrader.getUUID())) {
+                addNewMission(endTrader, Instant.now());
             }
             updateSerializedMissionData();
         } catch (SQLException e) {
@@ -384,23 +402,10 @@ public class Trader {
         }
     }
 
-    private boolean isMissionSpecValid(TradeMissionSpec missionSpec) {
-        // Check if mission meets config requirements (min distance and max distance)
-        float minDistance = TradeConfig.getFloat("min_route_distance", this.level);
-        float maxDistance = TradeConfig.getFloat("max_route_distance", this.level);
-        double routeDistance = missionSpec.getRouteDistance();
-        return routeDistance >= minDistance && routeDistance <= maxDistance;
-    }
-
     public void fixMissions() {
-        // Remove missions that no longer meet config requirements (min distance, max distance, and max missions)
-        List<TraderMission> missionsCopy = new ArrayList<>(getCurrentMissions().values());
-    
-        for (TraderMission mission : missionsCopy) {
-            if (!isMissionSpecValid(mission.getMissionSpec())) {
-                replaceMission(mission.getMissionSpecId(), !mission.getMissionSpec().getTaken());
-            }
-        }
+        // Remove missions that no longer meet config requirements
+        // (min distance, max distance, and max missions, no start or end trader)
+        removeInvalidMissions();
 
         // Check through all other traders up to make sure they have missions to all other traders up to
         // trader_max_missions
