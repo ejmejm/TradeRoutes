@@ -124,15 +124,14 @@ public class Trader {
             Optional<ActiveTradeMission> activeMission =
                     db.getActiveTradeMissionByPlayer(player.getUniqueId());
             if (activeMission.isEmpty()) {
-                // TODO: Uncomment this
-                // if (PluginChecker.getInstance().isPluginEnabled("Towny")) {
-                //     TownyAPI towny = TownyAPI.getInstance();
-                //     Town playerTown = towny.getTown(player);
-                //     if (playerTown == null || !playerTown.getName().equals(this.getAffiliation())) {
-                //         player.sendMessage(Component.text("You can only interact with your own town's trader.", NamedTextColor.RED));
-                //         return;
-                //     }
-                // }
+                if (PluginChecker.getInstance().isPluginEnabled("Towny")) {
+                    TownyAPI towny = TownyAPI.getInstance();
+                    Town playerTown = towny.getTown(player);
+                    if (playerTown == null || !playerTown.getName().equals(this.getAffiliation())) {
+                        player.sendMessage(Component.text("You can only interact with your own town's trader.", NamedTextColor.RED));
+                        return;
+                    }
+                }
                 db.getTraderById(getUUID()).ifPresent(
                         trader -> new TradeRouteMenu(trader).displayTo(player));
             } else {

@@ -3,6 +3,7 @@ package io.github.ejmejm.tradeRoutes;
 import de.oliver.fancynpcs.api.FancyNpcsPlugin;
 import io.github.ejmejm.tradeRoutes.events.CaravanDeathListener;
 import io.github.ejmejm.tradeRoutes.events.MenuListener;
+import io.github.ejmejm.tradeRoutes.events.TownDeletionListener;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -95,6 +96,9 @@ public final class TradeRoutes extends JavaPlugin {
         // Register event listeners
         getServer().getPluginManager().registerEvents(new MenuListener(), this);
         getServer().getPluginManager().registerEvents(new CaravanDeathListener(), this);
+        if (PluginChecker.getInstance().isPluginEnabled("Towny")) {
+            getServer().getPluginManager().registerEvents(new TownDeletionListener(), this);
+        }
 
         // Register commands
         getCommand("traderoutes").setExecutor(new CommandManager());
