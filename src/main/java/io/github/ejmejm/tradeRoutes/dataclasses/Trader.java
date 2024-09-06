@@ -8,13 +8,10 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
-import com.palmergames.bukkit.towny.TownyAPI;
-import com.palmergames.bukkit.towny.object.Town;
 import de.oliver.fancynpcs.api.FancyNpcsPlugin;
 import de.oliver.fancynpcs.api.Npc;
 import de.oliver.fancynpcs.api.NpcData;
 import de.oliver.fancynpcs.api.utils.SkinFetcher;
-import io.github.ejmejm.tradeRoutes.PluginChecker;
 import io.github.ejmejm.tradeRoutes.TradeConfig;
 import io.github.ejmejm.tradeRoutes.TradeRoutes;
 import io.github.ejmejm.tradeRoutes.TraderDatabase;
@@ -127,14 +124,15 @@ public class Trader {
             Optional<ActiveTradeMission> activeMission =
                     db.getActiveTradeMissionByPlayer(player.getUniqueId());
             if (activeMission.isEmpty()) {
-                if (PluginChecker.getInstance().isPluginEnabled("Towny")) {
-                    TownyAPI towny = TownyAPI.getInstance();
-                    Town playerTown = towny.getTown(player);
-                    if (playerTown == null || !playerTown.getName().equals(this.getAffiliation())) {
-                        player.sendMessage(Component.text("You can only interact with your own town's trader.", NamedTextColor.RED));
-                        return;
-                    }
-                }
+                // TODO: Uncomment this
+                // if (PluginChecker.getInstance().isPluginEnabled("Towny")) {
+                //     TownyAPI towny = TownyAPI.getInstance();
+                //     Town playerTown = towny.getTown(player);
+                //     if (playerTown == null || !playerTown.getName().equals(this.getAffiliation())) {
+                //         player.sendMessage(Component.text("You can only interact with your own town's trader.", NamedTextColor.RED));
+                //         return;
+                //     }
+                // }
                 db.getTraderById(getUUID()).ifPresent(
                         trader -> new TradeRouteMenu(trader).displayTo(player));
             } else {
@@ -271,7 +269,7 @@ public class Trader {
 
         if (!invalidMissionIds.isEmpty()) {
             for (int invalidMissionId : invalidMissionIds) {
-                removeMission(invalidMissionId, true);
+                removeMission(invalidMissionId, true, false);
             }
             updateSerializedMissionData();
             TradeRoutes.getInstance().getLogger().info("Removed " + invalidMissionIds.size() + " invalid missions for trader " + getUUID());
@@ -325,8 +323,9 @@ public class Trader {
      *
      * @param missionId The ID of the mission to be removed.
      * @param deleteFromDatabase Whether to delete the mission from the database.
+     * @param updateSerialized Whether to update the serialized mission data.
      */
-    public void removeMission(int missionId, boolean deleteFromDatabase) {
+    public void removeMission(int missionId, boolean deleteFromDatabase, boolean updateSerialized) {
         TraderMission missionToDelete = getCurrentMissions().remove(missionId);
 
         if (missionToDelete == null)
@@ -337,7 +336,9 @@ public class Trader {
             if (missionSpec != null && deleteFromDatabase)
                 TraderDatabase.getInstance().removeTradeMissionSpec(missionSpec);
 
-            updateSerializedMissionData();
+            if (updateSerialized) {
+                updateSerializedMissionData();
+            }
         } catch (SQLException e) {
             TradeRoutes.getInstance().getLogger().severe("Failed to remove mission: " + e.getMessage());
         }
@@ -348,9 +349,23 @@ public class Trader {
      *
      * @param missionToRemove The mission spec to be removed.
      * @param deleteFromDatabase Whether to delete the mission from the database.
+     * @param updateSerialized Whether to update the serialized mission data.
      */
-    public void removeMission(TradeMissionSpec missionToRemove, boolean deleteFromDatabase) {
-        removeMission(missionToRemove.getId(), deleteFromDatabase);
+    public void removeMission(TradeMissionSpec missionToRemove, boolean deleteFromDatabase, boolean updateSerialized) {
+        removeMission(missionToRemove.getId(), deleteFromDatabase, updateSerialized);
+    }
+
+    /**
+     * Removes all missions from the current missions list.
+     *
+     * @param deleteFromDatabase Whether to delete the missions from the database.
+     */
+    public void removeAllMissions(boolean deleteFromDatabase) {
+        Set<Integer> missionIds = new HashSet<>(getCurrentMissions().keySet());
+        for (int missionId : missionIds) {
+            removeMission(missionId, deleteFromDatabase, false);
+        }
+        updateSerializedMissionData();
     }
 
     /**

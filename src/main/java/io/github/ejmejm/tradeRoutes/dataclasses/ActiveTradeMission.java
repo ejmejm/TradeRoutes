@@ -11,6 +11,7 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.entity.Camel;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -223,6 +224,10 @@ public class ActiveTradeMission {
     }
 
     private boolean startStillHasMission() {
+        if (missionSpec == null || missionSpec.getStartTrader() == null
+                || missionSpec.getStartTrader().getTradeMissions() == null) {
+            return false;
+        }
         return missionSpec.getStartTrader().getTradeMissions().stream()
             .anyMatch(spec -> spec.getId() == missionSpec.getId());
     }
@@ -286,4 +291,13 @@ public class ActiveTradeMission {
     public void setCaravanUUID(UUID caravanUUID) {
         this.caravanUUID = caravanUUID;
     }
+    public boolean isValid() {
+        if (missionSpec == null || !missionSpec.isValid()) {
+            return false;
+        }
+        
+        LivingEntity caravan = (LivingEntity) Bukkit.getEntity(caravanUUID);
+        return caravan != null && !caravan.isDead();
+    }
+
 }

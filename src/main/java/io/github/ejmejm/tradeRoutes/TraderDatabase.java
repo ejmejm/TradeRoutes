@@ -191,7 +191,6 @@ public class TraderDatabase {
         traderDao.deleteById(traderUUID);
     }
 
-    // TODO: When a trader is removed, make sure to remove all mission specs and active missions associated with them
     public void removeTrader(Trader trader) throws SQLException {
         traderDao.delete(trader);
     }
@@ -263,6 +262,22 @@ public class TraderDatabase {
         return Optional.ofNullable(activeTradeMissionDao.queryBuilder()
                 .where().eq("playerUUID", playerUUID)
                 .queryForFirst());
+    }
+    public List<ActiveTradeMission> getActiveTradeMissionsByEndTrader(Trader trader) throws SQLException {
+        // First get all the mission specs that have the trader as the end trader
+        List<TradeMissionSpec> endTraderSpecs = tradeMissionSpecDao.queryBuilder()
+            .where().eq("endTrader_id", trader.getUUID())
+            .query();
+    
+        // If no specs found, return an empty list
+        if (endTraderSpecs.isEmpty()) {
+            return new ArrayList<>();
+        }
+    
+        // Then get all the active missions that have these mission specs
+        return activeTradeMissionDao.queryBuilder()
+            .where().in("missionSpec_id", endTraderSpecs.stream().map(TradeMissionSpec::getId).toList())
+            .query();
     }
 
     public List<ActiveTradeMission> getAllActiveTradeMissions() {

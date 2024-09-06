@@ -2,7 +2,6 @@ package io.github.ejmejm.tradeRoutes.subcommands;
 
 import com.palmergames.bukkit.towny.TownyAPI;
 import com.palmergames.bukkit.towny.object.Town;
-import de.oliver.fancynpcs.api.FancyNpcsPlugin;
 import io.github.ejmejm.tradeRoutes.PluginChecker;
 import io.github.ejmejm.tradeRoutes.TradeRoutes;
 import io.github.ejmejm.tradeRoutes.TraderDatabase;
@@ -19,6 +18,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static io.github.ejmejm.tradeRoutes.TraderManager.removeTraderTransaction;
 
 public class RemoveTraderCommand extends SubCommand {
     private static final String BASE_PERMISSION = "traderoutes.command.trader.remove.town";
@@ -136,25 +137,6 @@ public class RemoveTraderCommand extends SubCommand {
                     .append(Component.text(" has been removed", CMD_SUCCESS_COLOR))); 
         } finally {
             traderRemovalLock.unlock();
-        }
-    }
-
-    private void removeTraderTransaction(Trader trader) throws SQLException {
-        TraderDatabase traderDatabase = TraderDatabase.getInstance();
-        try {
-            traderDatabase.beginTransaction();
-
-            traderDatabase.removeTrader(trader);
-            
-            if (trader.getNpc() != null) {
-                trader.getNpc().removeForAll();
-                FancyNpcsPlugin.get().getNpcManager().removeNpc(trader.getNpc());
-            }
-            
-            traderDatabase.commitTransaction();
-        } catch (Exception e) {
-            traderDatabase.rollbackTransaction();
-            throw new SQLException("Failed to remove trader: " + e.getMessage(), e);
         }
     }
 
