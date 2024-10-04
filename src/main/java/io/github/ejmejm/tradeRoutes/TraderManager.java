@@ -18,22 +18,25 @@ public class TraderManager {
 
     private static final long MISSION_CHECK_INTERVAL = 2 * 60 * 20; // 2 minutes
     private static Map<String, Instant> lastAffiliationTraderSpawnTime = new ConcurrentHashMap<>();
-
     /**
-     * Fixes missions for all traders in the database.
+     * Fixes mission specs for all traders in the database.
      * This method iterates through all traders and calls fixMissions() on each one.
      * It ensures that all traders have the correct number and type of missions
      * according to the current configuration.
      */
-    public static void FixAllMissions() {
+    public static void fixAllMissionSpecs() {
         TraderDatabase db = TraderDatabase.getInstance();
-
-        // First fix all mission specs traders have
         for (Trader trader : db.getTraders().values()) {
             trader.fixMissions();
         }
+    }
 
-        // Then fix all active missions
+    /**
+     * Fixes all active trade missions in the database.
+     * This method checks the validity of each active mission and fails invalid ones.
+     */
+    public static void fixAllActiveMissions() {
+        TraderDatabase db = TraderDatabase.getInstance();
         for (ActiveTradeMission mission : db.getAllActiveTradeMissions()) {
             if (!mission.isValid()) {
                 mission.failMission(Component.text(
@@ -44,7 +47,10 @@ public class TraderManager {
 
     public static void registerMissionCheckTask(Plugin plugin) {
         plugin.getServer().getScheduler().runTaskTimerAsynchronously(
-                plugin, TraderManager::FixAllMissions, 5, MISSION_CHECK_INTERVAL);
+                plugin, TraderManager::fixAllMissionSpecs, 5, MISSION_CHECK_INTERVAL);
+        
+        plugin.getServer().getScheduler().runTaskTimer(
+                plugin, TraderManager::fixAllActiveMissions, 5, MISSION_CHECK_INTERVAL);
     }
 
     public static void updateAffiliationTraderSpawnTime(String affiliation, Instant time) {
