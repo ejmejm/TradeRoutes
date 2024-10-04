@@ -45,6 +45,10 @@ public class ActiveTradeMission {
     @DatabaseField
     private Date expiryTime;
 
+    // Add these as class variables
+    private static final NamespacedKey TRACKING_KEY = new NamespacedKey(
+        TradeRoutes.getInstance(), Constants.TRACKING_MISSION_KEY);
+
     // No-args constructor required by ORMLite
     public ActiveTradeMission() {}
 
@@ -146,6 +150,9 @@ public class ActiveTradeMission {
                 }
             }
 
+            // Stop compass tracking
+            MissionTracking.removeTrackingFromPlayerInventory(player);
+
             // Send success message
             player.sendMessage(Component.text(
                     "Trade mission completed successfully! You've received your rewards.", NamedTextColor.GREEN));
@@ -209,6 +216,9 @@ public class ActiveTradeMission {
 
         Player player = Bukkit.getPlayer(playerUUID);
         if (player != null) {
+            // Stop compass tracking
+            MissionTracking.removeTrackingFromPlayerInventory(player);
+
             // Send failure message
             player.sendMessage(Objects.requireNonNullElse(
                     failureMessage,
@@ -325,6 +335,7 @@ public class ActiveTradeMission {
     public void setCaravanUUID(UUID caravanUUID) {
         this.caravanUUID = caravanUUID;
     }
+
     public boolean isValid() {
         if (missionSpec == null || !missionSpec.isValid()) {
             return false;

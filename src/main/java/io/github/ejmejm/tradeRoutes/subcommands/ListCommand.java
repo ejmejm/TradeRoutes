@@ -44,7 +44,7 @@ public class ListCommand extends SubCommand {
 
     @Override
     public String getDescription() {
-        return "List all traders.";
+        return "List all traders or caravans.";
     }
 
     @Override
