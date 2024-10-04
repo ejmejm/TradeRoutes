@@ -297,7 +297,10 @@ public class ActiveTradeMission {
         }
         
         LivingEntity caravan = (LivingEntity) Bukkit.getEntity(caravanUUID);
-        return caravan != null && !caravan.isDead();
+        if (caravan != null) {
+            return !caravan.isDead();
+        }
+        return true;
     }
 
 }
