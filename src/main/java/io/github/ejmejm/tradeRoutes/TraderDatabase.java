@@ -208,13 +208,32 @@ public class TraderDatabase {
         return false;
     }
 
+    public boolean traderWithAffiliationExists(String affiliation, boolean caseSensitive) throws SQLException {
+        if (caseSensitive) {
+            return traderDao.queryBuilder().where().eq("affiliation", affiliation).countOf() > 0;
+        } else {
+            return traderDao.queryBuilder().where().like(
+                    "affiliation", affiliation.toLowerCase()).countOf() > 0;
+        }
+    }
+
     public boolean traderWithAffiliationExists(String affiliation) throws SQLException {
-        return traderDao.queryBuilder().where().eq("affiliation", affiliation).countOf() > 0;
+        return traderWithAffiliationExists(affiliation, false);
+    }
+
+    public Optional<Trader> getTraderByAffiliation(String affiliation, boolean caseSensitive) throws SQLException {
+        List<Trader> traders;
+        if (caseSensitive) {
+            traders = traderDao.queryBuilder().where().eq("affiliation", affiliation).query();
+        } else {
+            traders = traderDao.queryBuilder().where().like(
+                    "affiliation", affiliation.toLowerCase()).query();
+        }
+        return traders.isEmpty() ? Optional.empty() : Optional.of(traders.getFirst());
     }
 
     public Optional<Trader> getTraderByAffiliation(String affiliation) throws SQLException {
-        List<Trader> traders = traderDao.queryBuilder().where().eq("affiliation", affiliation).query();
-        return traders.isEmpty() ? Optional.empty() : Optional.of(traders.getFirst());
+        return getTraderByAffiliation(affiliation, false);
     }
 
     public boolean traderExists(String traderUUID) throws SQLException {
