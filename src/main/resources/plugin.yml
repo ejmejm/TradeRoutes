@@ -1,5 +1,5 @@
 name: TradeRoutes
-version: '1.0-SNAPSHOT'
+version: '1.0.1'
 main: io.github.ejmejm.tradeRoutes.TradeRoutes
 author: 'Edan Meyer'
 api-version: '1.21'

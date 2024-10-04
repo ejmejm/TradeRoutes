@@ -5,19 +5,16 @@ import com.j256.ormlite.table.DatabaseTable;
 import io.github.ejmejm.tradeRoutes.*;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.NamespacedKey;
+import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
-import org.bukkit.entity.Camel;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.FireworkMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.util.Vector;
 
 import java.sql.SQLException;
 import java.util.*;
@@ -153,8 +150,45 @@ public class ActiveTradeMission {
             player.sendMessage(Component.text(
                     "Trade mission completed successfully! You've received your rewards.", NamedTextColor.GREEN));
         }
+        Trader endTrader = missionSpec.getEndTrader();
+        
+        // Play fireworks and sound effect on completion
+        Location endLocation = endTrader.getLocation();
+        spawnCompletionFireworks(endLocation);
+
+        endLocation.getWorld().playSound(endLocation, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
 
         return true;
+    }
+
+    private void spawnCompletionFireworks(Location location) {
+        List<Color> colors = Arrays.asList(
+                Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW,
+                Color.PURPLE, Color.ORANGE, Color.FUCHSIA, Color.LIME,
+                Color.MAROON, Color.TEAL, Color.AQUA, Color.WHITE);
+        Random random = new Random();
+
+        for (int i = 0; i < 4; i++) {
+            Firework firework = (Firework) location.getWorld().spawnEntity(location, EntityType.FIREWORK_ROCKET);
+            FireworkMeta meta = firework.getFireworkMeta();
+            
+            FireworkEffect effect = FireworkEffect.builder()
+                .with(FireworkEffect.Type.BALL_LARGE)
+                .withColor(colors.get(random.nextInt(colors.size())))
+                .withFade(colors.get(random.nextInt(colors.size())))
+                .build();
+            
+            meta.addEffect(effect);
+            meta.setPower(1);
+            firework.setFireworkMeta(meta);
+            Vector direction = new Vector(
+                    (random.nextDouble() - 0.5) * 0.2,  // Reduced horizontal spread
+                    0.8 + random.nextDouble() * 0.2,    // More upward direction
+                    (random.nextDouble() - 0.5) * 0.2   // Reduced horizontal spread
+            ).normalize();
+            firework.setVelocity(direction.multiply(0.6));
+            firework.setTicksToDetonate(20);
+        }
     }
 
     public void failMission(Component failureMessage) {

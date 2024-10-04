@@ -500,8 +500,8 @@ public class Trader {
     }
 
     public Duration getMissionRefreshInterval() {
-        return Duration.ofMinutes(
-                TradeConfig.getInt("mission_refresh_interval", this.level));
+        return Duration.ofSeconds(
+                (long) (TradeConfig.getFloat("mission_refresh_interval", this.level) * 60));
     }
 
     public void setAffiliation(String affiliation) { this.affiliation = affiliation; }
